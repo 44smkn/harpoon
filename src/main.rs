@@ -1,6 +1,13 @@
+#[macro_use]
+extern crate serde_derive;
+extern crate serde;
+extern crate serde_json;
 use std::collections::VecDeque;
 
-struct ContainerDetail {}
+#[derive(Serialize, Deserialize, Debug)]
+struct ContainerDetail {
+    Path: String,
+}
 
 fn main() {
     println!("Hello, harpoon!");
@@ -29,4 +36,9 @@ fn main() {
         String::from_utf8_lossy(&stdout),
         String::from_utf8_lossy(&stderr)
     );
+
+    let details: Vec<ContainerDetail> =
+        serde_json::from_str(&String::from_utf8(stdout).unwrap()).unwrap();
+
+    println!("{:?}", details);
 }
