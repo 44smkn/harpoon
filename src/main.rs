@@ -1,43 +1,7 @@
-#[macro_use]
-extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
-use std::collections::{HashMap, VecDeque};
-
-#[derive(Serialize, Deserialize, Debug)]
-struct ContainerDetail {
-    Path: String,
-    Args: Vec<String>,
-    State: ContainerState,
-    Mounts: Vec<Mount>,
-    Config: ContainerConfig,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct ContainerState {
-    Status: String,
-    ExitCode: i32,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct Mount {
-    Type: String,
-    Name: String,
-    Source: String,
-    Destination: String,
-    Driver: String,
-    RW: bool,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct ContainerConfig {
-    Env: Vec<String>,
-    Cmd: Vec<String>,
-    Image: String,
-    WorkingDir: String,
-    Entrypoint: Option<Vec<String>>,
-    Labels: HashMap<String, String>,
-}
+use std::collections::VecDeque;
+use model::container_detail;
 
 fn main() {
     println!("Hello, harpoon!");
@@ -66,7 +30,7 @@ fn main() {
         String::from_utf8_lossy(&stderr)
     );
 
-    let details: Vec<ContainerDetail> =
+    let details: Vec<container_detail::ContainerDetail> =
         serde_json::from_str(&String::from_utf8(stdout).unwrap()).unwrap();
 
     println!("{:?}", details);
