@@ -1,5 +1,7 @@
 use std::collections::VecDeque;
 
+struct ContainerDetail {}
+
 fn main() {
     println!("Hello, harpoon!");
 
@@ -10,23 +12,21 @@ fn main() {
         std::process::exit(1);
     }
 
-    for id in args.iter() {
-        let (stdout, stderr) = match std::process::Command::new("docker")
-            .arg("inspect")
-            .arg(&id)
-            .output()
-        {
-            Ok(output) => (output.stdout, output.stderr),
-            Err(e) => {
-                println!("failed. cause is {}", e);
-                std::process::exit(1);
-            }
-        };
+    let (stdout, stderr) = match std::process::Command::new("docker")
+        .arg("inspect")
+        .args(&args)
+        .output()
+    {
+        Ok(output) => (output.stdout, output.stderr),
+        Err(e) => {
+            println!("failed. cause is {}", e);
+            std::process::exit(1);
+        }
+    };
 
-        println!(
-            "stdout: {}\nstderr: {}",
-            String::from_utf8_lossy(&stdout),
-            String::from_utf8_lossy(&stderr)
-        );
-    }
+    println!(
+        "stdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&stdout),
+        String::from_utf8_lossy(&stderr)
+    );
 }
