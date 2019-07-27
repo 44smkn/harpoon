@@ -2,11 +2,41 @@
 extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct ContainerDetail {
     Path: String,
+    Args: Vec<String>,
+    State: ContainerState,
+    Mounts: Vec<Mount>,
+    Config: ContainerConfig,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct ContainerState {
+    Status: String,
+    ExitCode: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Mount {
+    Type: String,
+    Name: String,
+    Source: String,
+    Destination: String,
+    Driver: String,
+    RW: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct ContainerConfig {
+    Env: Vec<String>,
+    Cmd: Vec<String>,
+    Image: String,
+    WorkingDir: String,
+    Entrypoint: Option<Vec<String>>,
+    Labels: HashMap<String, String>,
 }
 
 fn main() {
@@ -30,7 +60,6 @@ fn main() {
             std::process::exit(1);
         }
     };
-
     println!(
         "stdout: {}\nstderr: {}",
         String::from_utf8_lossy(&stdout),
