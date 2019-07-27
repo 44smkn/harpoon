@@ -2,11 +2,10 @@ fn main() {
     println!("Hello, harpoon!");
 
     let args = std::env::args().collect::<Vec<String>>();
-    println!("{:?}", args);
 
     let (stdout, stderr) = match std::process::Command::new("docker")
         .arg("inspect")
-        .arg("1435d5fbf3c6")
+        .arg(&args[1])
         .output()
     {
         Ok(output) => (output.stdout, output.stderr),
@@ -17,7 +16,7 @@ fn main() {
     };
 
     println!(
-        "stdout: {:?}\nstderr: {}",
+        "stdout: {}\nstderr: {}",
         String::from_utf8_lossy(&stdout),
         String::from_utf8_lossy(&stderr)
     );
