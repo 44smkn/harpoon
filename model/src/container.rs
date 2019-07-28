@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ContainerDetail {
+pub struct Detail {
     Path: String,
     Args: Vec<String>,
     State: ContainerState,
@@ -33,4 +33,16 @@ pub struct ContainerConfig {
     WorkingDir: String,
     Entrypoint: Option<Vec<String>>,
     Labels: HashMap<String, String>,
+}
+
+impl Detail {
+    pub fn from_json(json: &String) -> Vec<Detail> {
+        match serde_json::from_str(json) {
+            Ok(value) => value,
+            Err(e) => {
+                println!("failed to parse from json to object. cause:\n{}", e);
+                std::process::exit(1);
+            }
+        }
+    }
 }

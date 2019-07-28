@@ -1,6 +1,6 @@
 extern crate serde;
 extern crate serde_json;
-use model::container_detail;
+use model::container;
 use std::collections::VecDeque;
 
 fn main() {
@@ -40,13 +40,7 @@ fn main() {
     };
     dbg!(command_result);
 
-    let details: Vec<container_detail::ContainerDetail> = match serde_json::from_str(&stdout) {
-        Ok(value) => value,
-        Err(e) => {
-            println!("failed to parse from json to object. cause:\n{}", e);
-            std::process::exit(1);
-        }
-    };
+    let details = container::Detail::from_json(&stdout);
 
     println!("{:?}", details);
 }
