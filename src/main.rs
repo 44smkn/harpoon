@@ -41,6 +41,6 @@ fn main() {
     dbg!(command_result);
 
     let details = container::Detail::from_json(&stdout);
-
-    println!("{:?}", details);
+    let formatted = container::Detail::details_to_string(container::Format::Yaml, details);
+    println!("{}", formatted);
 }

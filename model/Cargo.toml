@@ -9,4 +9,6 @@ edition = "2018"
 [dependencies]
 serde = ""
 serde_json = ""
+serde_yaml = ""
+toml = ""
 serde_derive = ""
