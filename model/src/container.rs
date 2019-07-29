@@ -48,17 +48,11 @@ pub enum Format {
     Toml,
 }
 
-impl Detail {
-    pub fn from_json(json: &String) -> Vec<Detail> {
-        match serde_json::from_str(json) {
-            Ok(value) => value,
-            Err(e) => {
-                println!("failed to parse from json to object. cause:\n{}", e);
-                std::process::exit(1);
-            }
-        }
-    }
+pub fn new_from_json(json: &String) -> Vec<Detail> {
+    serde_json::from_str(json).expect("failed to parse from json to object")
+}
 
+impl Detail {
     pub fn details_to_string(fmt: Format, containers: Vec<Detail>) -> String {
         match fmt {
             Format::Yaml => match serde_yaml::to_string(&containers) {

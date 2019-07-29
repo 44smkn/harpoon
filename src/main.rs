@@ -61,7 +61,7 @@ fn main() {
     };
     //dbg!(command_result);
 
-    let details = container::Detail::from_json(&stdout);
+    let details = container::new_from_json(&stdout);
     let format = match format {
         "yaml" => container::Format::Yaml,
         "toml" => container::Format::Toml,
