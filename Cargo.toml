@@ -9,4 +9,5 @@ edition = "2018"
 [dependencies]
 serde = ""
 serde_json = ""
+clap = ""
 model = { package = "model", path = "./model"}
