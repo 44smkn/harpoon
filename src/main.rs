@@ -22,26 +22,21 @@ fn main() {
         .arg(
             Arg::with_name("container_ids")
                 .help("Sets the container id")
+                .multiple(true)
+                .takes_value(true)
                 .required(true),
         )
         .get_matches();
 
     let format = matches.value_of("output_formats").unwrap_or("toml");
-    let container_ids = matches.value_of("container_ids").unwrap();
-    println!("{}", container_ids);
-
-    /*
-    let mut args = std::env::args().collect::<VecDeque<String>>();
-    let _ = args.pop_front();
-    if args.is_empty() {
-        println!("failed to parse args");
-        std::process::exit(1);
-    }
-    */
+    let container_ids = matches
+        .values_of("container_ids")
+        .unwrap()
+        .collect::<Vec<_>>();
 
     let (stdout, stderr) = match std::process::Command::new("docker")
         .arg("inspect")
-        .arg(&container_ids)
+        .args(&container_ids)
         .output()
     {
         Ok(output) => (output.stdout, output.stderr),
