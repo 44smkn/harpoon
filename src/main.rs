@@ -70,6 +70,6 @@ fn main() {
             std::process::exit(1);
         }
     };
-    let formatted = container::Detail::details_to_string(format, details);
+    let formatted = format.to_string(&details);
     println!("{}", formatted);
 }

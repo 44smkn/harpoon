@@ -52,23 +52,11 @@ pub fn new_from_json(json: &String) -> Vec<Detail> {
     serde_json::from_str(json).expect("failed to parse from json to object")
 }
 
-impl Detail {
-    pub fn details_to_string(fmt: Format, containers: Vec<Detail>) -> String {
-        match fmt {
-            Format::Yaml => match serde_yaml::to_string(&containers) {
-                Ok(value) => value,
-                Err(e) => {
-                    println!("failed to serialize from object to yaml. cause:\n{}", e);
-                    std::process::exit(1);
-                }
-            },
-            Format::Toml => match toml::to_string(&containers) {
-                Ok(value) => value,
-                Err(e) => {
-                    println!("failed to serialize from object to toml. cause:\n{}", e);
-                    std::process::exit(1);
-                }
-            },
+impl Format {
+    pub fn to_string(&self, containers: &Vec<Detail>) -> String {
+        match self {
+            Format::Yaml => serde_yaml::to_string(&containers).expect("failed to serialize from object to yaml"),
+            Format::Toml => toml::to_string(&containers).expect("failed to serialize from object to toml"),
         }
     }
 }
