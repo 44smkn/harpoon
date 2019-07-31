@@ -34,25 +34,20 @@ fn main() {
         .unwrap()
         .collect::<Vec<_>>();
 
-    let (stdout, stderr) = match std::process::Command::new("docker")
+    let output = std::process::Command::new("docker")
         .arg("inspect")
         .args(&container_ids)
         .output()
-    {
-        Ok(output) => (output.stdout, output.stderr),
-        Err(e) => {
-            println!("failed. cause:\n{}", e);
-            std::process::exit(1);
-        }
-    };
+        .unwrap_or_else(|e| panic!("failed. cause:\n{}", e));
 
-    let (stdout, stderr) = match String::from_utf8(stdout) {
-        Ok(value) => (value, String::from_utf8(stderr).unwrap()),
-        Err(e) => {
-            println!("failed to parse from Vec<u8> to utf8. cause:\n{}", e);
-            std::process::exit(1);
-        }
-    };
+    let (stdout, stderr) = (
+        String::from_utf8(output.stdout).unwrap_or_else(|e| {
+            panic!("failed to parse stdout from Vec<u8> to utf8. cause:\n{}", e)
+        }),
+        String::from_utf8(output.stderr).unwrap_or_else(|e| {
+            panic!("failed to parse stderr from Vec<u8> to utf8. cause:\n{}", e)
+        }),
+    );
 
     let command_result = if String::is_empty(&stderr) {
         String::from(&stdout)
