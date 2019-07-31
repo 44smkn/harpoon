@@ -38,6 +38,7 @@ fn main() {
 
     let details = container::new_from_json(&stdout);
     let format = match format {
+        "json" => container::Format::Json,
         "yaml" => container::Format::Yaml,
         "toml" => container::Format::Toml,
         _ => {

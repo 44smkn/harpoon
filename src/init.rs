@@ -10,7 +10,7 @@ pub fn new_app<'a, 'b>() -> App<'a, 'b> {
                 .short("o")
                 .long("output")
                 .value_name("output_format")
-                .possible_values(&["toml", "yaml"])
+                .possible_values(&["toml", "yaml", "json"])
                 .help("To output details to your terminal window in a specific format, you can add either the -o or --output flags")
                 .takes_value(true),
         )
