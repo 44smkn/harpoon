@@ -1,33 +1,13 @@
 extern crate clap;
 extern crate serde;
 extern crate serde_json;
-use clap::{App, Arg, SubCommand};
 use model::container;
-use std::collections::VecDeque;
+
+mod init;
 
 fn main() {
-    let matches = App::new("harpoon")
-        .version("1.0")
-        .author("44smkn from undergroundyin")
-        .about("extract information of container")
-        .arg(
-            Arg::with_name("output_formats")
-                .short("o")
-                .long("output")
-                .value_name("output_format")
-                .possible_values(&["toml", "yaml"])
-                .help("To output details to your terminal window in a specific format, you can add either the -o or --output flags")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("container_ids")
-                .help("Sets the container id")
-                .multiple(true)
-                .takes_value(true)
-                .required(true),
-        )
-        .get_matches();
-
+    let app = init::new_app();
+    let matches = app.get_matches();
     let format = matches.value_of("output_formats").unwrap_or("toml");
     let container_ids = matches
         .values_of("container_ids")
