@@ -3,7 +3,7 @@ use std::collections::HashMap;
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "PascalCase")]
 pub struct Detail {
-    path: String,
+    pub path: String,
     args: Vec<String>,
     state: ContainerState,
     mounts: Vec<Mount>,
@@ -56,9 +56,8 @@ pub fn new_from_json(json: &String) -> Vec<Detail> {
 impl Format {
     pub fn to_string(&self, containers: &Vec<Detail>) -> String {
         match self {
-            Format::Json => {
-                serde_json::to_string_pretty(&containers).expect("failed to serialize from object to json")
-            }
+            Format::Json => serde_json::to_string_pretty(&containers)
+                .expect("failed to serialize from object to json"),
             Format::Yaml => {
                 serde_yaml::to_string(&containers).expect("failed to serialize from object to yaml")
             }
