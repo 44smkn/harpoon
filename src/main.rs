@@ -1,51 +1,137 @@
-extern crate clap;
-extern crate serde;
-extern crate serde_json;
-use model::container;
+mod infrastructure;
+mod presentation;
 
-mod init;
+use crate::infrastructure::webapi::client::Client;
+use crate::infrastructure::webapi::rest::client::RestApi;
+use crate::presentation::shared::event::{Event, Events};
+use clap::Clap;
+use std::{error::Error, io};
+use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
+use tui::{
+    backend::TermionBackend,
+    layout::{Constraint, Layout},
+    style::{Color, Modifier, Style},
+    widgets::{Block, Borders, Row, Table, TableState},
+    Terminal,
+};
 
-fn main() {
-    let app = init::new_app();
-    let matches = app.get_matches();
-    let format = matches.value_of("output_formats").unwrap_or("toml");
-    let container_ids = matches
-        .values_of("container_ids")
-        .unwrap()
-        .collect::<Vec<_>>();
+#[derive(Clap)]
+#[clap(version = "0.1.0", author = "Kenji S. <xxxxxxxxxx@gmail.com>")]
+struct Opts {
+    #[clap(short, long, default_value = "1.39")]
+    api_version: String,
 
-    let output = std::process::Command::new("docker")
-        .arg("inspect")
-        .args(&container_ids)
-        .output()
-        .unwrap_or_else(|e| panic!("failed. cause:\n{}", e));
+    #[clap(short, long, default_value = "unix:///var/run/docker.sock")]
+    endpoint: String,
 
-    let (stdout, stderr) = (
-        String::from_utf8(output.stdout).unwrap_or_else(|e| {
-            panic!("failed to parse stdout from Vec<u8> to utf8. cause:\n{}", e)
-        }),
-        String::from_utf8(output.stderr).unwrap_or_else(|e| {
-            panic!("failed to parse stderr from Vec<u8> to utf8. cause:\n{}", e)
-        }),
-    );
+    #[clap(short, long, default_value = "0")]
+    verbose: i32,
+}
 
-    let command_result = if String::is_empty(&stderr) {
-        String::from(&stdout)
-    } else {
-        stderr
-    };
-    //dbg!(command_result);
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
+    let opts: Opts = Opts::parse();
+    println!("Value for config: {}", opts.api_version);
 
-    let details = container::new_from_json(&stdout);
-    let format = match format {
-        "json" => container::Format::Json,
-        "yaml" => container::Format::Yaml,
-        "toml" => container::Format::Toml,
-        _ => {
-            println!("Please specify format type");
-            std::process::exit(1);
+    // Terminal initialization
+    let stdout = io::stdout().into_raw_mode()?;
+    let stdout = MouseTerminal::from(stdout);
+    let stdout = AlternateScreen::from(stdout);
+    let backend = TermionBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+
+    let events = Events::new();
+
+    let client = RestApi::new("/var/run/docker.sock");
+    let items: Vec<Vec<String>> = client.get("/images/json").await?;
+    let mut table = StatefulTable::new(items);
+
+    // Input
+    loop {
+        terminal.draw(|f| {
+            let rects = Layout::default()
+                .constraints([Constraint::Percentage(100)].as_ref())
+                .margin(5)
+                .split(f.size());
+
+            let selected_style = Style::default()
+                .fg(Color::Yellow)
+                .add_modifier(Modifier::BOLD);
+            let normal_style = Style::default().fg(Color::White);
+            let header = ["NAME", "SIZE", "CREATED"];
+            let rows = table
+                .items
+                .iter()
+                .map(|i| Row::StyledData(i.iter(), normal_style));
+            let t = Table::new(header.iter(), rows)
+                .block(Block::default().borders(Borders::ALL).title("Images"))
+                .highlight_style(selected_style)
+                .highlight_symbol(">> ")
+                .widths(&[
+                    Constraint::Percentage(50),
+                    Constraint::Length(30),
+                    Constraint::Max(10),
+                ]);
+            f.render_stateful_widget(t, rects[0], &mut table.state);
+        })?;
+
+        if let Event::Input(key) = events.next()? {
+            match key {
+                Key::Char('q') => {
+                    break;
+                }
+                Key::Down => {
+                    table.next();
+                }
+                Key::Up => {
+                    table.previous();
+                }
+                _ => {}
+            }
+        };
+    }
+
+    Ok(())
+}
+
+pub struct StatefulTable {
+    state: TableState,
+    items: Vec<Vec<String>>,
+}
+
+impl<'a> StatefulTable {
+    fn new(items: Vec<Vec<String>>) -> StatefulTable {
+        StatefulTable {
+            state: TableState::default(),
+            items: items,
         }
-    };
-    let formatted = format.to_string(&details);
-    println!("{}", formatted);
+    }
+
+    pub fn next(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i >= self.items.len() - 1 {
+                    0
+                } else {
+                    i + 1
+                }
+            }
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+
+    pub fn previous(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                if i == 0 {
+                    self.items.len() - 1
+                } else {
+                    i - 1
+                }
+            }
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
 }
