@@ -41,12 +41,15 @@ impl Client for RestApi {
         let images: ListImageOutput = serde_json::from_slice(&bytes)?;
         let mut items: Vec<Vec<String>> = Vec::new();
 
-        for image in images.iter() {
+        for mut image in images.into_iter() {
             if &image.repo_tags[0] == "<none>:<none>" {
                 continue;
             }
             let mut row: Vec<String> = Vec::new();
-            row.push(image.repo_tags[0].clone());
+            row.push(std::mem::replace(
+                &mut image.repo_tags[0],
+                Default::default(),
+            ));
             let size = f64::from(image.size) / 1000000.0;
             row.push(format!("{:.2}MB", size));
             let created_date = NaiveDateTime::from_timestamp(image.created, 0);
@@ -54,7 +57,6 @@ impl Client for RestApi {
             items.push(row);
         }
 
-        //let items = vec![vec!["image".to_string(), "32".to_string()]];
         Ok(items)
     }
 }
