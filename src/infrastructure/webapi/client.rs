@@ -1,7 +1,8 @@
 use async_trait::async_trait;
-use std::error::Error;
+use hyper::client::ResponseFuture;
+use hyperlocal::Uri;
 
 #[async_trait]
 pub trait Client {
-    async fn get(&self, path: &str) -> Result<Vec<Vec<String>>, Box<dyn Error + Send + Sync>>;
+    fn get(&self, path: &str) -> ResponseFuture;
 }
