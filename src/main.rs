@@ -3,6 +3,7 @@ mod presentation;
 
 use crate::infrastructure::webapi::client::Client;
 use crate::infrastructure::webapi::rest::client::RestApi;
+use crate::infrastructure::webapi::rest::image_repository::ImageRepository;
 use crate::presentation::shared::event::{Event, Events};
 use clap::Clap;
 use std::{error::Error, io};
@@ -43,7 +44,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let events = Events::new();
 
     let client = RestApi::new("/var/run/docker.sock");
-    let items: Vec<Vec<String>> = client.get("/images/json").await?;
+    let image_repository = ImageRepository::new(client);
+    let items: Vec<Vec<String>> = image_repository.list().await?;
     let mut table = StatefulTable::new(items);
 
     // Input
