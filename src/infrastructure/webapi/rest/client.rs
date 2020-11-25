@@ -2,6 +2,7 @@ use crate::infrastructure::webapi::client::Client;
 use async_trait::async_trait;
 use chrono::prelude::*;
 use futures_util::stream::TryStreamExt;
+use hyper::client::connect::{Connect, HttpConnector};
 use hyper::client::ResponseFuture;
 use hyper::{self, Body};
 use hyperlocal::{UnixClientExt, UnixConnector, Uri};
@@ -9,26 +10,29 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
 
-pub struct RestApi {
-    pub client: hyper::Client<UnixConnector, Body>,
-    pub unix_socket: String,
+pub struct RestApi<T: Connect> {
+    pub client: hyper::Client<T, Body>,
+    pub url: String,
     // 認証情報とかを後で追加する
 }
 
-impl RestApi {
-    pub fn new(unix_socket_path: &str) -> RestApi {
+impl<T: Connect> RestApi<T> {
+    pub fn unix(unix_socket_path: &str) -> RestApi<UnixConnector> {
         let client = hyper::Client::unix();
-        let unix_socket = unix_socket_path.to_string();
-        RestApi {
-            client,
-            unix_socket,
-        }
+        let url = unix_socket_path.to_string();
+        RestApi { client, url }
+    }
+
+    pub fn http(domain: &str) -> RestApi<HttpConnector> {
+        let client = hyper::Client::new();
+        let url = domain.to_string();
+        RestApi { client, url }
     }
 }
 
-impl Client for RestApi {
+impl<T: Connect + Clone + Send + Sync + 'static> Client for RestApi<T> {
     fn get(&self, path: &str) -> ResponseFuture {
-        let uri = Uri::new(&self.unix_socket, path).into();
+        let uri = Uri::new(&self.url, path).into();
         self.client.get(uri)
     }
 }

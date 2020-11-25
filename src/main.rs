@@ -6,6 +6,7 @@ use crate::infrastructure::webapi::rest::client::RestApi;
 use crate::infrastructure::webapi::rest::image_repository::ImageRepository;
 use crate::presentation::shared::event::{Event, Events};
 use clap::Clap;
+use hyperlocal::{UnixClientExt, UnixConnector, Uri};
 use std::{error::Error, io};
 use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
 use tui::{
@@ -43,7 +44,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
     let events = Events::new();
 
-    let client = RestApi::new("/var/run/docker.sock");
+    let client = RestApi::<UnixConnector>::unix("/var/run/docker.sock");
     let image_repository = ImageRepository::new(client);
     let items: Vec<Vec<String>> = image_repository.list().await?;
     let mut table = StatefulTable::new(items);
