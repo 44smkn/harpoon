@@ -1,7 +1,8 @@
+mod domain;
 mod infrastructure;
 mod presentation;
 
-use crate::infrastructure::webapi::client::Client;
+use crate::domain::image::image::ImageRepository as _;
 use crate::infrastructure::webapi::rest::client::RestApi;
 use crate::infrastructure::webapi::rest::image_repository::ImageRepository;
 use crate::presentation::shared::event::{Event, Events};

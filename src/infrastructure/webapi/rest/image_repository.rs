@@ -1,4 +1,6 @@
+use crate::domain::image::image as domain;
 use crate::infrastructure::webapi::client::Client;
+use crate::infrastructure::webapi::rest::client::RestApi;
 use async_trait::async_trait;
 use chrono::prelude::*;
 use futures_util::stream::TryStreamExt;
@@ -8,16 +10,19 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
 
-pub struct ImageRepository<T: Client> {
-    client: T,
+pub struct ImageRepository {
+    client: RestApi<UnixConnector>,
 }
 
-impl<T: Client> ImageRepository<T> {
-    pub fn new(client: T) -> Self {
+impl ImageRepository {
+    pub fn new(client: RestApi<UnixConnector>) -> Self {
         ImageRepository { client }
     }
+}
 
-    pub async fn list(&self) -> Result<Vec<Vec<String>>, Box<dyn Error + Send + Sync>> {
+#[async_trait]
+impl domain::ImageRepository for ImageRepository {
+    async fn list(&self) -> Result<Vec<Vec<String>>, Box<dyn Error + Send + Sync>> {
         let response_body = self.client.get("/images/json").await?.into_body();
         let bytes = response_body
             .try_fold(Vec::default(), |mut buf, bytes| async {
