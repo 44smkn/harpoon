@@ -1,8 +1,11 @@
 use crate::infrastructure::webapi::client::Client;
+use async_trait::async_trait;
+use futures_util::stream::TryStreamExt;
 use hyper::client::connect::{Connect, HttpConnector};
 use hyper::client::ResponseFuture;
 use hyper::{self, Body};
 use hyperlocal::{UnixClientExt, UnixConnector, Uri};
+use std::error::Error;
 
 pub struct RestApi<T: Connect> {
     pub client: hyper::Client<T, Body>,
@@ -26,9 +29,17 @@ impl RestApi<HttpConnector> {
     }
 }
 
+#[async_trait]
 impl<T: Connect + Clone + Send + Sync + 'static> Client for RestApi<T> {
-    fn get(&self, path: &str) -> ResponseFuture {
+    async fn get(&self, path: &str) -> Result<Vec<u8>, Box<dyn Error + Send + Sync>> {
         let uri = Uri::new(&self.url, path).into();
-        self.client.get(uri)
+        let response_body = self.client.get(uri).await?.into_body();
+        let bytes = response_body
+            .try_fold(Vec::default(), |mut buf, bytes| async {
+                buf.extend(bytes);
+                Ok(buf)
+            })
+            .await?;
+        Ok(bytes)
     }
 }

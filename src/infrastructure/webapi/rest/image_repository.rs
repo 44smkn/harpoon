@@ -23,13 +23,7 @@ impl<'a> ImageRepository<'a> {
 #[async_trait]
 impl<'a> domain::ImageRepository for ImageRepository<'a> {
     async fn list(&self) -> Result<Vec<Vec<String>>, Box<dyn Error + Send + Sync>> {
-        let response_body = self.client.get("/images/json").await?.into_body();
-        let bytes = response_body
-            .try_fold(Vec::default(), |mut buf, bytes| async {
-                buf.extend(bytes);
-                Ok(buf)
-            })
-            .await?;
+        let bytes = self.client.get("/images/json").await?;
 
         let images: ListImageOutput = serde_json::from_slice(&bytes)?;
         let mut items: Vec<Vec<String>> = Vec::new();
