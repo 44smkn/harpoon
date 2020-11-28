@@ -46,7 +46,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let events = Events::new();
 
     let client = RestApi::<UnixConnector>::new("/var/run/docker.sock");
-    let image_repository = ImageRepository::new(client);
+    let image_repository = ImageRepository::new(&client);
     let items: Vec<Vec<String>> = image_repository.list().await?;
     let mut table = StatefulTable::new(items);
 

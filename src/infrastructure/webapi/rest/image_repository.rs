@@ -10,18 +10,18 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
 
-pub struct ImageRepository {
-    client: RestApi<UnixConnector>,
+pub struct ImageRepository<'a> {
+    client: &'a RestApi<UnixConnector>,
 }
 
-impl ImageRepository {
-    pub fn new(client: RestApi<UnixConnector>) -> Self {
+impl<'a> ImageRepository<'a> {
+    pub fn new(client: &'a RestApi<UnixConnector>) -> Self {
         ImageRepository { client }
     }
 }
 
 #[async_trait]
-impl domain::ImageRepository for ImageRepository {
+impl<'a> domain::ImageRepository for ImageRepository<'a> {
     async fn list(&self) -> Result<Vec<Vec<String>>, Box<dyn Error + Send + Sync>> {
         let response_body = self.client.get("/images/json").await?.into_body();
         let bytes = response_body
