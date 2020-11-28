@@ -30,7 +30,10 @@ impl RestApi<HttpConnector> {
 }
 
 #[async_trait]
-impl<T: Connect + Clone + Send + Sync + 'static> Client for RestApi<T> {
+impl<T> Client for RestApi<T>
+where
+    T: Connect + Clone + Send + Sync + 'static,
+{
     async fn get(&self, path: &str) -> Result<Vec<u8>, Box<dyn Error + Send + Sync>> {
         let uri = Uri::new(&self.url, path).into();
         let response_body = self.client.get(uri).await?.into_body();
