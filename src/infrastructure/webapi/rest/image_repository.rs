@@ -3,6 +3,7 @@ use crate::infrastructure::webapi::client::Client;
 use crate::infrastructure::webapi::rest::client::RestApi;
 use async_trait::async_trait;
 use chrono::prelude::*;
+use chrono::NaiveDateTime;
 use futures_util::stream::TryStreamExt;
 use hyper::{self, Body};
 use hyperlocal::{UnixClientExt, UnixConnector, Uri};
@@ -25,26 +26,26 @@ impl<'a, T> domain::ImageRepository for ImageRepository<'a, T>
 where
     T: Client + Send + Sync + 'static,
 {
-    async fn list(&self) -> Result<Vec<Vec<String>>, Box<dyn Error + Send + Sync>> {
+    async fn list(&self) -> Result<Vec<domain::Image>, Box<dyn Error + Send + Sync>> {
         let bytes = self.client.get("/images/json").await?;
 
         let images: ListImageOutput = serde_json::from_slice(&bytes)?;
-        let mut items: Vec<Vec<String>> = Vec::new();
+        let mut items: Vec<domain::Image> = Vec::new();
 
-        for mut image in images.into_iter() {
-            if &image.repo_tags[0] == "<none>:<none>" {
-                continue;
-            }
-            let mut row: Vec<String> = Vec::new();
-            row.push(std::mem::replace(
-                &mut image.repo_tags[0],
-                Default::default(),
-            ));
-            let size = f64::from(image.size) / 1000000.0;
-            row.push(format!("{:.2}MB", size));
-            let created_date = NaiveDateTime::from_timestamp(image.created, 0);
-            row.push(created_date.format("%Y-%m-%d %H:%M:%S").to_string());
-            items.push(row);
+        for image in images.into_iter() {
+            let item = domain::Image {
+                id: image.id,
+                parent_id: image.parent_id,
+                repo_tags: image.repo_tags,
+                repo_digests: image.repo_digests.unwrap_or_else(|| Vec::new()),
+                created: DateTime::<Utc>::from_utc(
+                    NaiveDateTime::from_timestamp(image.created, 0),
+                    Utc,
+                ),
+                size: image.size,
+                labels: image.labels.unwrap_or_else(|| HashMap::new()),
+            };
+            items.push(item);
         }
 
         Ok(items)

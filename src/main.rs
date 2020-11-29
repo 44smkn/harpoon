@@ -1,11 +1,13 @@
 mod domain;
 mod infrastructure;
 mod presentation;
+mod usecase;
 
 use crate::domain::image::image::ImageRepository as _;
 use crate::infrastructure::webapi::rest::client::RestApi;
 use crate::infrastructure::webapi::rest::image_repository::ImageRepository;
 use crate::presentation::shared::event::{Event, Events};
+use crate::usecase::list_image::ListImageUsecase;
 use clap::Clap;
 use hyperlocal::{UnixClientExt, UnixConnector, Uri};
 use std::{error::Error, io};
@@ -47,7 +49,9 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
     let client = RestApi::<UnixConnector>::new("/var/run/docker.sock");
     let image_repository = ImageRepository::new(&client);
-    let items: Vec<Vec<String>> = image_repository.list().await?;
+    let items: Vec<Vec<String>> = ListImageUsecase::new(&image_repository)
+        .list_image()
+        .await?;
     let mut table = StatefulTable::new(items);
 
     // Input
