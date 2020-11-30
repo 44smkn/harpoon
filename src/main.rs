@@ -7,6 +7,7 @@ use crate::domain::image::image::ImageRepository as _;
 use crate::infrastructure::webapi::rest::client::RestApi;
 use crate::infrastructure::webapi::rest::image_repository::ImageRepository;
 use crate::presentation::shared::event::{Event, Events};
+use crate::presentation::shared::init;
 use crate::usecase::list_image::ListImageUsecase;
 use clap::Clap;
 use hyperlocal::{UnixClientExt, UnixConnector, Uri};
@@ -39,11 +40,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     println!("Value for config: {}", opts.api_version);
 
     // Terminal initialization
-    let stdout = io::stdout().into_raw_mode()?;
-    let stdout = MouseTerminal::from(stdout);
-    let stdout = AlternateScreen::from(stdout);
-    let backend = TermionBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
+    let mut terminal = init::terminal()?;
 
     let events = Events::new();
 
