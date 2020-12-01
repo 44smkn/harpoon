@@ -1,12 +1,8 @@
 use crate::domain::image::image as domain;
 use crate::infrastructure::webapi::client::Client;
-use crate::infrastructure::webapi::rest::client::RestApi;
 use async_trait::async_trait;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
-use futures_util::stream::TryStreamExt;
-use hyper::{self, Body};
-use hyperlocal::{UnixClientExt, UnixConnector, Uri};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error::Error;

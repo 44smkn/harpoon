@@ -1,6 +1,4 @@
 use async_trait::async_trait;
-use hyper::client::ResponseFuture;
-use hyperlocal::Uri;
 use std::error::Error;
 
 #[async_trait]

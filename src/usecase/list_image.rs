@@ -1,9 +1,4 @@
-use crate::domain::image::image::{Image, ImageRepository};
-use crate::infrastructure::webapi::client::Client;
-use crate::infrastructure::webapi::rest::client::RestApi;
-use crate::infrastructure::webapi::rest::image_repository as rest;
-use async_trait::async_trait;
-use hyperlocal::{UnixClientExt, UnixConnector, Uri};
+use crate::domain::image::image::ImageRepository;
 use std::error::Error;
 
 pub struct ListImageUsecase<'a, T: ImageRepository> {

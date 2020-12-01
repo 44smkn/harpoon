@@ -3,6 +3,7 @@ mod infrastructure;
 mod presentation;
 mod usecase;
 
+#[allow(unused_imports)]
 use crate::domain::image::image::ImageRepository as _;
 use crate::infrastructure::webapi::rest::client::RestApi;
 use crate::infrastructure::webapi::rest::image_repository::ImageRepository;
@@ -10,17 +11,16 @@ use crate::presentation::shared::event::{Event, Events};
 use crate::presentation::shared::init;
 use crate::usecase::list_image::ListImageUsecase;
 use clap::Clap;
-use hyperlocal::{UnixClientExt, UnixConnector, Uri};
-use std::{error::Error, io};
-use termion::{event::Key, input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
+use hyperlocal::UnixConnector;
+use std::error::Error;
+use termion::event::Key;
 use tui::{
-    backend::TermionBackend,
     layout::{Constraint, Layout},
     style::{Color, Modifier, Style},
     widgets::{Block, Borders, Row, Table, TableState},
-    Terminal,
 };
 
+#[allow(dead_code)]
 #[derive(Clap)]
 #[clap(version = "0.1.0", author = "Kenji S. <xxxxxxxxxx@gmail.com>")]
 struct Opts {

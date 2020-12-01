@@ -1,5 +1,5 @@
 use std::error::Error;
-use std::io::{self, Write};
+use std::io;
 use termion::{input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
 use tui::{
     backend::{Backend, TermionBackend},

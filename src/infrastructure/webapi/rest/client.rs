@@ -2,7 +2,6 @@ use crate::infrastructure::webapi::client::Client;
 use async_trait::async_trait;
 use futures_util::stream::TryStreamExt;
 use hyper::client::connect::{Connect, HttpConnector};
-use hyper::client::ResponseFuture;
 use hyper::{self, Body};
 use hyperlocal::{UnixClientExt, UnixConnector, Uri};
 use std::error::Error;
@@ -22,6 +21,7 @@ impl RestApi<UnixConnector> {
 }
 
 impl RestApi<HttpConnector> {
+    #[allow(dead_code)]
     pub fn new(domain: &str) -> RestApi<HttpConnector> {
         let client = hyper::Client::new();
         let url = domain.to_string();
