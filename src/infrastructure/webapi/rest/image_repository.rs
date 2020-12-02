@@ -1,4 +1,4 @@
-use crate::domain::image::image as domain;
+use crate::domain::image as domain;
 use crate::infrastructure::webapi::client::Client;
 use async_trait::async_trait;
 use chrono::prelude::*;

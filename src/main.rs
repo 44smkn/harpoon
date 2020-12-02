@@ -4,7 +4,7 @@ mod presentation;
 mod usecase;
 
 #[allow(unused_imports)]
-use crate::domain::image::image::ImageRepository as _;
+use crate::domain::image::ImageRepository as _;
 use crate::infrastructure::webapi::rest::client::RestApi;
 use crate::infrastructure::webapi::rest::image_repository::ImageRepository;
 use crate::presentation::shared::event::{Event, Events};
@@ -108,7 +108,7 @@ impl<'a> StatefulTable {
     fn new(items: Vec<Vec<String>>) -> StatefulTable {
         StatefulTable {
             state: TableState::default(),
-            items: items,
+            items,
         }
     }
 
