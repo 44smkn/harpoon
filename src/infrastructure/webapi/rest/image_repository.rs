@@ -33,13 +33,13 @@ where
                 id: image.id,
                 parent_id: image.parent_id,
                 repo_tags: image.repo_tags,
-                repo_digests: image.repo_digests.unwrap_or_else(|| Vec::new()),
+                repo_digests: image.repo_digests.unwrap_or_else(Vec::new),
                 created: DateTime::<Utc>::from_utc(
                     NaiveDateTime::from_timestamp(image.created, 0),
                     Utc,
                 ),
                 size: image.size,
-                labels: image.labels.unwrap_or_else(|| HashMap::new()),
+                labels: image.labels.unwrap_or_else(HashMap::new),
             };
             items.push(item);
         }
