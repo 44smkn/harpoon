@@ -22,9 +22,7 @@ pub async fn table<T: Client + Send + Sync + 'static>(
     events: &Events,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     let image_repository = ImageRepository::new(client);
-    let items: Vec<Vec<String>> = ListImageUsecase::new(&image_repository)
-        .list_image()
-        .await?;
+    let items: Vec<Vec<String>> = ListImageUsecase::new(image_repository).list_image().await?;
     let mut table = StatefulTable::new(items);
 
     // Input
