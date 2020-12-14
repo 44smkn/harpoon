@@ -3,6 +3,7 @@ use crate::domain::image::ImageRepository as _;
 use crate::infrastructure::webapi::client::Client;
 use crate::infrastructure::webapi::rest::image_repository::ImageRepository;
 use crate::presentation::shared::event::{Event, Events};
+use crate::presentation::shared::tabs;
 
 use crate::presentation::shared::table::StatefulTable;
 use crate::usecase::list_image::ListImageUsecase;
@@ -52,6 +53,8 @@ pub async fn table<T: Client + Send + Sync + 'static>(
                     Constraint::Max(10),
                 ]);
             f.render_stateful_widget(t, rects[0], &mut table.state);
+
+            tabs::draw(f)
         })?;
 
         if let Event::Input(key) = events.next()? {
