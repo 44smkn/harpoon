@@ -11,7 +11,7 @@ use std::error::Error;
 use termion::event::Key;
 use tui::{
     backend::Backend,
-    layout::{Constraint, Layout},
+    layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     widgets::{Block, Borders, Row, Table},
     Terminal,
@@ -25,15 +25,18 @@ pub async fn table<T: Client + Send + Sync + 'static>(
     let image_repository = ImageRepository::new(client);
     let items: Vec<Vec<String>> = ListImageUsecase::new(image_repository).list_image().await?;
     let mut table = StatefulTable::new(items);
+    let mut tab = tabs::TabsState::new_menu();
 
     // Input
     loop {
         terminal.draw(|f| {
+            // define layout
             let rects = Layout::default()
-                .constraints([Constraint::Percentage(100)].as_ref())
-                .margin(5)
+                .direction(Direction::Vertical)
+                .constraints([Constraint::Percentage(10), Constraint::Percentage(90)].as_ref())
                 .split(f.size());
 
+            tab.draw(f, rects[0]);
             let selected_style = Style::default()
                 .fg(Color::Yellow)
                 .add_modifier(Modifier::BOLD);
@@ -52,9 +55,7 @@ pub async fn table<T: Client + Send + Sync + 'static>(
                     Constraint::Length(30),
                     Constraint::Max(10),
                 ]);
-            f.render_stateful_widget(t, rects[0], &mut table.state);
-
-            tabs::draw(f)
+            f.render_stateful_widget(t, rects[1], &mut table.state);
         })?;
 
         if let Event::Input(key) = events.next()? {
@@ -67,6 +68,12 @@ pub async fn table<T: Client + Send + Sync + 'static>(
                 }
                 Key::Up => {
                     table.previous();
+                }
+                Key::Right => {
+                    tab.next();
+                }
+                Key::Left => {
+                    tab.previous();
                 }
                 _ => {}
             }
