@@ -35,10 +35,9 @@ impl<'a> TabsState<'a> {
     }
 
     pub fn draw(&mut self, frame: &mut Frame<impl Backend>, rect: Rect) {
-        // App
-        let app = App {
-            tabs: TabsState::new(vec!["Container", "Image", "Volume", "Network"]),
-        };
+        let block = Block::default().style(Style::default().bg(Color::White).fg(Color::Black));
+        frame.render_widget(block, frame.size());
+
         let titles = self
             .titles
             .iter()
@@ -52,7 +51,7 @@ impl<'a> TabsState<'a> {
             .collect();
         let tabs = Tabs::new(titles)
             .block(Block::default().borders(Borders::ALL).title("Tabs"))
-            .select(app.tabs.index)
+            .select(self.index)
             .style(Style::default().fg(Color::Cyan))
             .highlight_style(
                 Style::default()
@@ -61,8 +60,4 @@ impl<'a> TabsState<'a> {
             );
         frame.render_widget(tabs, rect);
     }
-}
-
-struct App<'a> {
-    tabs: TabsState<'a>,
 }

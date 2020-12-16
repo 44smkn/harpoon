@@ -13,7 +13,8 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Row, Table},
+    text::{Span, Spans},
+    widgets::{Block, Borders, Paragraph, Row, Table, Wrap},
     Terminal,
 };
 
@@ -31,16 +32,21 @@ pub async fn table<T: Client + Send + Sync + 'static>(
     loop {
         terminal.draw(|f| {
             // define layout
-            let rects = Layout::default()
+            let area = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints([Constraint::Percentage(10), Constraint::Percentage(90)].as_ref())
                 .split(f.size());
 
-            tab.draw(f, rects[0]);
+            let chunks = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+                .split(area[1]);
+
+            tab.draw(f, area[0]);
             let selected_style = Style::default()
                 .fg(Color::Yellow)
                 .add_modifier(Modifier::BOLD);
-            let normal_style = Style::default().fg(Color::White);
+            let normal_style = Style::default().fg(Color::DarkGray);
             let header = ["NAME", "SIZE", "CREATED"];
             let rows = table
                 .items
@@ -55,7 +61,17 @@ pub async fn table<T: Client + Send + Sync + 'static>(
                     Constraint::Length(30),
                     Constraint::Max(10),
                 ]);
-            f.render_stateful_widget(t, rects[1], &mut table.state);
+            f.render_stateful_widget(t, chunks[0], &mut table.state);
+
+            let text = vec![Spans::from("It shows container's details here")];
+            let block = Block::default().borders(Borders::ALL).title(Span::styled(
+                "Footer",
+                Style::default()
+                    .fg(Color::Magenta)
+                    .add_modifier(Modifier::BOLD),
+            ));
+            let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
+            f.render_widget(paragraph, chunks[1]);
         })?;
 
         if let Event::Input(key) = events.next()? {
