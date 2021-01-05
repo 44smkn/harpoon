@@ -1,17 +1,20 @@
 #[allow(unused_imports)]
 use crate::domain::image::ImageRepository as _;
+use crate::domain::image::{Image, ImageDetail};
 use crate::infrastructure::webapi::client::Client;
 use crate::infrastructure::webapi::rest::image_repository::ImageRepository;
 use crate::presentation::shared::event::{Event, Events};
 use crate::presentation::shared::tabs;
 
 use crate::presentation::shared::table::StatefulTable;
+use crate::usecase::inspect_image::InspectImageUsecase;
 use crate::usecase::list_image::ListImageUsecase;
 use std::error::Error;
+use std::{thread, time};
 use termion::event::Key;
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout},
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
     widgets::{Block, Borders, Paragraph, Row, Table, Wrap},
@@ -24,9 +27,11 @@ pub async fn table<T: Client + Send + Sync + 'static>(
     events: &Events,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     let image_repository = ImageRepository::new(client);
-    let items: Vec<Vec<String>> = ListImageUsecase::new(image_repository).list_image().await?;
+    let mut images = ListImageUsecase::new(image_repository).list_image().await?;
+    let items = images_to_table(&mut images);
     let mut table = StatefulTable::new(items);
     let mut tab = tabs::TabsState::new_menu();
+    let mut detail_text: Vec<Spans> = vec![Spans::from("It shows container's details here")];
 
     // Input
     loop {
@@ -63,14 +68,15 @@ pub async fn table<T: Client + Send + Sync + 'static>(
                 ]);
             f.render_stateful_widget(t, chunks[0], &mut table.state);
 
-            let text = vec![Spans::from("It shows container's details here")];
             let block = Block::default().borders(Borders::ALL).title(Span::styled(
                 "Footer",
                 Style::default()
                     .fg(Color::Magenta)
                     .add_modifier(Modifier::BOLD),
             ));
-            let paragraph = Paragraph::new(text).block(block).wrap(Wrap { trim: true });
+            let paragraph = Paragraph::new(detail_text.clone())
+                .block(block)
+                .wrap(Wrap { trim: true });
             f.render_widget(paragraph, chunks[1]);
         })?;
 
@@ -81,6 +87,23 @@ pub async fn table<T: Client + Send + Sync + 'static>(
                 }
                 Key::Down => {
                     table.next();
+                    let image_idx = table.state.selected();
+                    detail_text = if let Some(v) = image_idx {
+                        let image_id = &images[v].id;
+                        let image_repository = ImageRepository::new(client); // 後で借用させるように変更する
+                        let detail = InspectImageUsecase::new(image_repository)
+                            .inspect_image(image_id)
+                            .await;
+                        match detail {
+                            Ok(v) => vec![Spans::from(format!("os: {}", v.os))],
+                            Err(e) => vec![Spans::from(format!(
+                                "Failed to get container's details: {}",
+                                e
+                            ))],
+                        }
+                    } else {
+                        vec![Spans::from("It shows container's details here")]
+                    };
                 }
                 Key::Up => {
                     table.previous();
@@ -97,4 +120,20 @@ pub async fn table<T: Client + Send + Sync + 'static>(
     }
 
     Ok(())
+}
+
+fn images_to_table(images: &mut Vec<Image>) -> Vec<Vec<String>> {
+    let mut items: Vec<Vec<String>> = Vec::new();
+    for image in images.into_iter() {
+        if &image.repo_tags[0] == "<none>:<none>" {
+            continue;
+        }
+        let mut row: Vec<String> = Vec::new();
+        row.push(std::mem::take(&mut image.repo_tags[0]));
+        let size = f64::from(image.size) / 1000000.0;
+        row.push(format!("{:.2}MB", size));
+        row.push(image.created.format("%Y-%m-%d %H:%M:%S").to_string());
+        items.push(row);
+    }
+    items
 }

@@ -4,8 +4,10 @@ use async_trait::async_trait;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+use serde_path_to_error;
 use std::collections::HashMap;
 use std::error::Error;
+use std::str;
 
 pub struct ImageRepository<'a, T: Client> {
     client: &'a T,
@@ -52,7 +54,9 @@ where
         id: String,
     ) -> Result<domain::ImageDetail, Box<dyn Error + Send + Sync>> {
         let bytes = self.client.get(&format!("/images/{}/json", id)).await?;
-        let detail: ImageDetail = serde_json::from_slice(&bytes)?;
+        let st = str::from_utf8(&bytes).unwrap();
+        let deserializer = &mut serde_json::Deserializer::from_slice(&bytes);
+        let detail: ImageDetail = serde_path_to_error::deserialize(deserializer)?;
         let bytes = self.client.get(&format!("/images/{}/history", id)).await?;
         let records: ImageHistory = serde_json::from_slice(&bytes)?;
         let mut items: domain::ImageHistory = Vec::new();
@@ -81,7 +85,7 @@ where
             architecture: detail.architecture,
             env: detail.config.env,
             entrypoint: detail.config.entrypoint,
-            cmd: detail.config.cmd,
+            cmd: detail.config.cmd.unwrap_or(vec!["".to_string()]),
             history: items,
         })
     }
@@ -164,7 +168,7 @@ pub struct ContainerConfig {
     pub domainname: String,
     #[serde(rename = "AttachStdout")]
     pub attach_stdout: bool,
-    #[serde(rename = "PublishService")]
+    #[serde(rename = "PublishService", default)]
     pub publish_service: String,
     #[serde(rename = "AttachStdin")]
     pub attach_stdin: bool,
@@ -172,17 +176,17 @@ pub struct ContainerConfig {
     pub open_stdin: bool,
     #[serde(rename = "StdinOnce")]
     pub stdin_once: bool,
-    #[serde(rename = "NetworkDisabled")]
+    #[serde(rename = "NetworkDisabled", default)]
     pub network_disabled: bool,
     #[serde(rename = "OnBuild")]
-    pub on_build: Vec<::serde_json::Value>,
+    pub on_build: Option<Vec<::serde_json::Value>>,
     #[serde(rename = "Image")]
     pub image: String,
     #[serde(rename = "User")]
     pub user: String,
     #[serde(rename = "WorkingDir")]
     pub working_dir: String,
-    #[serde(rename = "MacAddress")]
+    #[serde(rename = "MacAddress", default)]
     pub mac_address: String,
     #[serde(rename = "AttachStderr")]
     pub attach_stderr: bool,
@@ -191,7 +195,7 @@ pub struct ContainerConfig {
     #[serde(rename = "Env")]
     pub env: Vec<String>,
     #[serde(rename = "Cmd")]
-    pub cmd: Vec<String>,
+    pub cmd: Option<Vec<String>>,
     #[serde(rename = "Entrypoint")]
     pub entrypoint: Vec<String>,
 }
@@ -214,13 +218,13 @@ pub struct Data {}
 pub struct Config {
     #[serde(rename = "Image")]
     pub image: String,
-    #[serde(rename = "NetworkDisabled")]
+    #[serde(rename = "NetworkDisabled", default)]
     pub network_disabled: bool,
     #[serde(rename = "OnBuild")]
-    pub on_build: Vec<::serde_json::Value>,
+    pub on_build: Option<Vec<::serde_json::Value>>,
     #[serde(rename = "StdinOnce")]
     pub stdin_once: bool,
-    #[serde(rename = "PublishService")]
+    #[serde(rename = "PublishService", default)]
     pub publish_service: String,
     #[serde(rename = "AttachStdin")]
     pub attach_stdin: bool,
@@ -235,12 +239,12 @@ pub struct Config {
     #[serde(rename = "Hostname")]
     pub hostname: String,
     #[serde(rename = "Cmd")]
-    pub cmd: Vec<String>,
+    pub cmd: Option<Vec<String>>,
     #[serde(rename = "Env")]
     pub env: Vec<String>,
     #[serde(rename = "Labels")]
     pub labels: Option<HashMap<String, String>>,
-    #[serde(rename = "MacAddress")]
+    #[serde(rename = "MacAddress", default)]
     pub mac_address: String,
     #[serde(rename = "AttachStderr")]
     pub attach_stderr: bool,

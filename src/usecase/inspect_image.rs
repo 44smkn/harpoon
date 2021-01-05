@@ -16,7 +16,7 @@ impl<T: ImageRepository> InspectImageUsecase<T> {
         &self,
         id: impl Into<String>,
     ) -> Result<ImageDetail, Box<dyn Error + Send + Sync>> {
-        let detail = self.repository.inspect(id).await?;
+        let detail = self.repository.inspect(id.into()).await?;
         Ok(detail)
     }
 }
