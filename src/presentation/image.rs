@@ -95,7 +95,21 @@ pub async fn table<T: Client + Send + Sync + 'static>(
                             .inspect_image(image_id)
                             .await;
                         match detail {
-                            Ok(v) => vec![Spans::from(format!("os: {}", v.os))],
+                            Ok(v) => vec![
+                                Spans::from(format!("id: {}", v.image.id)),
+                                Spans::from(format!("digest: {:?}", v.image.repo_digests[0])),
+                                Spans::from(format!("os/arch: {}/{}", v.os, v.architecture)),
+                                Spans::from(format!("entrypoint: {:?}", v.entrypoint)),
+                                Spans::from(format!("cmd: {:?}", v.cmd)),
+                                Spans::from(format!("env: {:?}", v.env)),
+                                Spans::from(format!("labels: {:?}", v.image.labels)),
+                                Spans::from(""),
+                                Spans::from("history:"),
+                                Spans::from(format!(
+                                    "{}  {}  {}",
+                                    v.history[0].id, v.history[0].created_by, v.history[0].size
+                                )),
+                            ],
                             Err(e) => vec![Spans::from(format!(
                                 "Failed to get container's details: {}",
                                 e

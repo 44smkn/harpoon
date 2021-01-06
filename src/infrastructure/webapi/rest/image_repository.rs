@@ -4,7 +4,6 @@ use async_trait::async_trait;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use serde_path_to_error;
 use std::collections::HashMap;
 use std::error::Error;
 use std::str;
@@ -54,9 +53,7 @@ where
         id: String,
     ) -> Result<domain::ImageDetail, Box<dyn Error + Send + Sync>> {
         let bytes = self.client.get(&format!("/images/{}/json", id)).await?;
-        let st = str::from_utf8(&bytes).unwrap();
-        let deserializer = &mut serde_json::Deserializer::from_slice(&bytes);
-        let detail: ImageDetail = serde_path_to_error::deserialize(deserializer)?;
+        let detail: ImageDetail = serde_json::from_slice(&bytes)?;
         let bytes = self.client.get(&format!("/images/{}/history", id)).await?;
         let records: ImageHistory = serde_json::from_slice(&bytes)?;
         let mut items: domain::ImageHistory = Vec::new();
@@ -277,7 +274,7 @@ pub struct ImageRecord {
     #[serde(rename = "CreatedBy")]
     pub created_by: String,
     #[serde(rename = "Tags")]
-    pub tags: Vec<String>,
+    pub tags: Option<Vec<String>>,
     #[serde(rename = "Size")]
     pub size: i32,
     #[serde(rename = "Comment")]
