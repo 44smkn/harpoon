@@ -87,40 +87,11 @@ pub async fn table<T: Client + Send + Sync + 'static>(
                 }
                 Key::Down => {
                     table.next();
-                    let image_idx = table.state.selected();
-                    detail_text = if let Some(v) = image_idx {
-                        let image_id = &images[v].id;
-                        let image_repository = ImageRepository::new(client); // 後で借用させるように変更する
-                        let detail = InspectImageUsecase::new(image_repository)
-                            .inspect_image(image_id)
-                            .await;
-                        match detail {
-                            Ok(v) => vec![
-                                Spans::from(format!("id: {}", v.image.id)),
-                                Spans::from(format!("digest: {:?}", v.image.repo_digests[0])),
-                                Spans::from(format!("os/arch: {}/{}", v.os, v.architecture)),
-                                Spans::from(format!("entrypoint: {:?}", v.entrypoint)),
-                                Spans::from(format!("cmd: {:?}", v.cmd)),
-                                Spans::from(format!("env: {:?}", v.env)),
-                                Spans::from(format!("labels: {:?}", v.image.labels)),
-                                Spans::from(""),
-                                Spans::from("history:"),
-                                Spans::from(format!(
-                                    "{}  {}  {}",
-                                    v.history[0].id, v.history[0].created_by, v.history[0].size
-                                )),
-                            ],
-                            Err(e) => vec![Spans::from(format!(
-                                "Failed to get container's details: {}",
-                                e
-                            ))],
-                        }
-                    } else {
-                        vec![Spans::from("It shows container's details here")]
-                    };
+                    detail_text = gen_detail_text(table.state.selected(), &images, client).await;
                 }
                 Key::Up => {
                     table.previous();
+                    detail_text = gen_detail_text(table.state.selected(), &images, client).await;
                 }
                 Key::Right => {
                     tab.next();
@@ -150,4 +121,41 @@ fn images_to_table(images: &mut Vec<Image>) -> Vec<Vec<String>> {
         items.push(row);
     }
     items
+}
+
+async fn gen_detail_text<'a, T: Client + Send + Sync + 'static>(
+    idx: Option<usize>,
+    images: &Vec<Image>,
+    client: &T,
+) -> Vec<Spans<'a>> {
+    if let Some(v) = idx {
+        let image_id = &images[v].id;
+        let image_repository = ImageRepository::new(client); // 後で借用させるように変更する
+        let detail = InspectImageUsecase::new(image_repository)
+            .inspect_image(image_id)
+            .await;
+        match detail {
+            Ok(v) => vec![
+                Spans::from(format!("id: {}", v.image.id)),
+                Spans::from(format!("digest: {:?}", v.image.repo_digests[0])),
+                Spans::from(format!("os/arch: {}/{}", v.os, v.architecture)),
+                Spans::from(format!("entrypoint: {:?}", v.entrypoint)),
+                Spans::from(format!("cmd: {:?}", v.cmd)),
+                Spans::from(format!("env: {:?}", v.env)),
+                Spans::from(format!("labels: {:?}", v.image.labels)),
+                Spans::from(""),
+                Spans::from("history:"),
+                Spans::from(format!(
+                    "{}  {}  {}",
+                    v.history[0].id, v.history[0].created_by, v.history[0].size
+                )),
+            ],
+            Err(e) => vec![Spans::from(format!(
+                "Failed to get container's details: {}",
+                e
+            ))],
+        }
+    } else {
+        vec![Spans::from("It shows container's details here")]
+    }
 }
