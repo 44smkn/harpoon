@@ -1,6 +1,6 @@
+use crate::domain::image::Image;
 #[allow(unused_imports)]
 use crate::domain::image::ImageRepository as _;
-use crate::domain::image::{Image, ImageDetail};
 use crate::infrastructure::webapi::client::Client;
 use crate::infrastructure::webapi::rest::image_repository::ImageRepository;
 use crate::presentation::shared::event::{Event, Events};
@@ -10,11 +10,10 @@ use crate::presentation::shared::table::StatefulTable;
 use crate::usecase::inspect_image::InspectImageUsecase;
 use crate::usecase::list_image::ListImageUsecase;
 use std::error::Error;
-use std::{thread, time};
 use termion::event::Key;
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
     widgets::{Block, Borders, Paragraph, Row, Table, Wrap},
