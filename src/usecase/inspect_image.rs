@@ -1,12 +1,12 @@
 use crate::domain::image::{ImageDetail, ImageRepository};
 use std::error::Error;
 
-pub struct InspectImageUsecase<T: ImageRepository> {
-    repository: T,
+pub struct InspectImageUsecase<'a, T: ImageRepository> {
+    repository: &'a T,
 }
 
-impl<T: ImageRepository> InspectImageUsecase<T> {
-    pub fn new(image_repository: T) -> Self {
+impl<'a, T: ImageRepository> InspectImageUsecase<'a, T> {
+    pub fn new(image_repository: &'a T) -> Self {
         InspectImageUsecase {
             repository: image_repository,
         }

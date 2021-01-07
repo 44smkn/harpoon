@@ -26,7 +26,9 @@ pub async fn table<T: Client + Send + Sync + 'static>(
     events: &Events,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     let image_repository = ImageRepository::new(client);
-    let mut images = ListImageUsecase::new(image_repository).list_image().await?;
+    let mut images = ListImageUsecase::new(&image_repository)
+        .list_image()
+        .await?;
     let items = images_to_table(&mut images);
     let mut table = StatefulTable::new(items);
     let mut tab = tabs::TabsState::new_menu();
@@ -86,11 +88,13 @@ pub async fn table<T: Client + Send + Sync + 'static>(
                 }
                 Key::Down => {
                     table.next();
-                    detail_text = gen_detail_text(table.state.selected(), &images, client).await;
+                    detail_text =
+                        gen_detail_text(table.state.selected(), &images, &image_repository).await;
                 }
                 Key::Up => {
                     table.previous();
-                    detail_text = gen_detail_text(table.state.selected(), &images, client).await;
+                    detail_text =
+                        gen_detail_text(table.state.selected(), &images, &image_repository).await;
                 }
                 Key::Right => {
                     tab.next();
@@ -122,14 +126,16 @@ fn images_to_table(images: &mut Vec<Image>) -> Vec<Vec<String>> {
     items
 }
 
-async fn gen_detail_text<'a, T: Client + Send + Sync + 'static>(
+async fn gen_detail_text<'a, T>(
     idx: Option<usize>,
     images: &Vec<Image>,
-    client: &T,
-) -> Vec<Spans<'a>> {
+    image_repository: &'a ImageRepository<'a, T>,
+) -> Vec<Spans<'a>>
+where
+    T: Client + Send + Sync + 'static,
+{
     if let Some(v) = idx {
         let image_id = &images[v].id;
-        let image_repository = ImageRepository::new(client); // 後で借用させるように変更する
         let detail = InspectImageUsecase::new(image_repository)
             .inspect_image(image_id)
             .await;
