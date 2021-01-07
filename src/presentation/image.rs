@@ -136,7 +136,10 @@ async fn gen_detail_text<'a, T: Client + Send + Sync + 'static>(
         match detail {
             Ok(v) => vec![
                 Spans::from(format!("id: {}", v.image.id)),
-                Spans::from(format!("digest: {:?}", v.image.repo_digests[0])),
+                Spans::from(format!(
+                    "digest: {}",
+                    v.image.repo_digests.get(0).unwrap_or(&"".to_string())
+                )),
                 Spans::from(format!("os/arch: {}/{}", v.os, v.architecture)),
                 Spans::from(format!("entrypoint: {:?}", v.entrypoint)),
                 Spans::from(format!("cmd: {:?}", v.cmd)),
