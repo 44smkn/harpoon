@@ -1,6 +1,6 @@
-use crate::domain::image::Image;
 #[allow(unused_imports)]
 use crate::domain::image::ImageRepository as _;
+use crate::domain::image::{Image, ImageHistory};
 use crate::infrastructure::webapi::client::Client;
 use crate::infrastructure::webapi::rest::image_repository::ImageRepository;
 use crate::presentation::shared::{
@@ -12,7 +12,7 @@ use crate::presentation::shared::{
 
 use crate::usecase::inspect_image::InspectImageUsecase;
 use crate::usecase::list_image::ListImageUsecase;
-use std::error::Error;
+use std::{error::Error, slice::Iter};
 use termion::event::Key;
 use tui::{
     backend::Backend,
@@ -36,6 +36,7 @@ pub async fn table<T: Client + Send + Sync + 'static>(
     let mut table = StatefulTable::new(items);
     let mut tab = tabs::TabsState::new_menu();
     let mut detail_text: Vec<Spans> = vec![Spans::from("It shows container's details here")];
+    let mut histories: Vec<Vec<String>> = Vec::new();
 
     // Input
     loop {
@@ -72,8 +73,12 @@ pub async fn table<T: Client + Send + Sync + 'static>(
                 ]);
             f.render_stateful_widget(t, chunks[0], &mut table.state);
 
+            let detail_area = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+                .split(chunks[1]);
             let block = Block::default().borders(Borders::ALL).title(Span::styled(
-                "Footer",
+                "Detail",
                 Style::default()
                     .fg(Color::Magenta)
                     .add_modifier(Modifier::BOLD),
@@ -81,7 +86,21 @@ pub async fn table<T: Client + Send + Sync + 'static>(
             let paragraph = Paragraph::new(detail_text.clone())
                 .block(block)
                 .wrap(Wrap { trim: true });
-            f.render_widget(paragraph, chunks[1]);
+            f.render_widget(paragraph, detail_area[0]);
+
+            let history_table = histories
+                .iter()
+                .map(|i| Row::StyledData(i.iter(), normal_style));
+            let header = vec!["IMAGE ID", "CREATED BY", "SIZE"];
+            let image_history = Table::new(header.iter(), history_table)
+                .block(Block::default().borders(Borders::ALL).title("History"))
+                .widths(&[
+                    Constraint::Percentage(30),
+                    Constraint::Percentage(60),
+                    Constraint::Percentage(10),
+                ])
+                .column_spacing(1);
+            f.render_widget(image_history, detail_area[1]);
         })?;
 
         if let Event::Input(key) = events.next()? {
@@ -91,13 +110,19 @@ pub async fn table<T: Client + Send + Sync + 'static>(
                 }
                 Key::Down => {
                     table.next();
-                    detail_text =
+                    // TODO: 分解代入がリリースされたら差し替える（https://github.com/rust-lang/rust/issues/71126）
+                    let tuple =
                         gen_detail_text(table.state.selected(), &images, &image_repository).await;
+                    detail_text = tuple.0;
+                    histories = tuple.1;
                 }
                 Key::Up => {
                     table.previous();
-                    detail_text =
+                    // TODO: 分解代入がリリースされたら差し替える（https://github.com/rust-lang/rust/issues/71126）
+                    let tuple =
                         gen_detail_text(table.state.selected(), &images, &image_repository).await;
+                    detail_text = tuple.0;
+                    histories = tuple.1;
                 }
                 Key::Right => {
                     tab.next();
@@ -133,7 +158,7 @@ async fn gen_detail_text<'a, T>(
     idx: Option<usize>,
     images: &Vec<Image>,
     image_repository: &'a ImageRepository<'a, T>,
-) -> Vec<Spans<'a>>
+) -> (Vec<Spans<'a>>, Vec<Vec<String>>)
 where
     T: Client + Send + Sync + 'static,
 {
@@ -143,27 +168,30 @@ where
             .inspect_image(image_id)
             .await;
         match detail {
-            Ok(v) => span::from_texts(vec![
-                format!("id: {}", v.image.id),
-                format!(
-                    "digest: {}",
-                    v.image.repo_digests.get(0).unwrap_or(&"".to_string())
-                ),
-                format!("os/arch: {}/{}", v.os, v.architecture),
-                format!("entrypoint: {:?}", v.entrypoint),
-                format!("cmd: {:?}", v.cmd),
-                format!("env: {:?}", v.env),
-                format!("labels: {:?}", v.image.labels),
-                "".to_string(),
-                "history:".to_string(),
-                format!(
-                    "{}  {}  {}",
-                    v.history[0].id, v.history[0].created_by, v.history[0].size
-                ),
-            ]),
-            Err(e) => span::from_texts(vec![format!("Failed to get container's details: {}", e)]),
+            Ok(v) => (
+                span::from_texts(vec![
+                    format!("id: {}", v.image.id),
+                    format!(
+                        "digest: {}",
+                        v.image.repo_digests.get(0).unwrap_or(&"".to_string())
+                    ),
+                    format!("os/arch: {}/{}", v.os, v.architecture),
+                    format!("entrypoint: {:?}", v.entrypoint),
+                    format!("cmd: {:?}", v.cmd),
+                    format!("env: {:?}", v.env),
+                    format!("labels: {:?}", v.image.labels),
+                ]),
+                vec![],
+            ),
+            Err(e) => (
+                span::from_texts(vec![format!("Failed to get container's details: {}", e)]),
+                vec![],
+            ),
         }
     } else {
-        span::from_texts(vec!["It shows container's details here"])
+        (
+            span::from_texts(vec!["It shows container's details here"]),
+            vec![],
+        )
     }
 }
