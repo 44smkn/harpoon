@@ -1,6 +1,6 @@
+use crate::domain::image::Image;
 #[allow(unused_imports)]
 use crate::domain::image::ImageRepository as _;
-use crate::domain::image::{Image, ImageHistory};
 use crate::infrastructure::webapi::client::Client;
 use crate::infrastructure::webapi::rest::image_repository::ImageRepository;
 use crate::presentation::shared::{
@@ -12,7 +12,7 @@ use crate::presentation::shared::{
 
 use crate::usecase::inspect_image::InspectImageUsecase;
 use crate::usecase::list_image::ListImageUsecase;
-use std::{error::Error, slice::Iter};
+use std::error::Error;
 use termion::event::Key;
 use tui::{
     backend::Backend,

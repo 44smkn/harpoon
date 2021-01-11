@@ -7,6 +7,7 @@ use std::error::Error;
 pub trait ImageRepository {
     async fn list(&self) -> Result<Vec<Image>, Box<dyn Error + Send + Sync>>;
     async fn inspect(&self, id: String) -> Result<ImageDetail, Box<dyn Error + Send + Sync>>;
+    async fn history(&self, id: String) -> Result<ImageHistory, Box<dyn Error + Send + Sync>>;
 }
 
 pub struct Image {

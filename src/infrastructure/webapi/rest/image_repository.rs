@@ -86,6 +86,24 @@ where
             history: items,
         })
     }
+
+    async fn history(
+        &self,
+        id: String,
+    ) -> Result<domain::ImageHistory, Box<dyn Error + Send + Sync>> {
+        let bytes = self.client.get(&format!("/images/{}/history", id)).await?;
+        let records: ImageHistory = serde_json::from_slice(&bytes)?;
+        let mut items: domain::ImageHistory = Vec::new();
+        for record in records.into_iter() {
+            let item = domain::ImageRecord {
+                id: record.id,
+                created_by: record.created_by,
+                size: record.size,
+            };
+            items.push(item);
+        }
+        Ok(items)
+    }
 }
 
 pub type ListImageOutput = Vec<Image>;
