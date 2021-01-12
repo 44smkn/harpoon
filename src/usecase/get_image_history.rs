@@ -14,9 +14,9 @@ impl<'a, T: ImageRepository> GetImageHistoryUsecase<'a, T> {
 
     pub async fn get_history(
         &self,
-        id: String,
+        id: impl Into<String>,
     ) -> Result<ImageHistory, Box<dyn Error + Send + Sync>> {
-        let history = self.repository.history(id).await?;
+        let history = self.repository.history(id.into()).await?;
         Ok(history)
     }
 }

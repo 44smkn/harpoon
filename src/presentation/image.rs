@@ -10,8 +10,10 @@ use crate::presentation::shared::{
     tabs,
 };
 
-use crate::usecase::inspect_image::InspectImageUsecase;
-use crate::usecase::list_image::ListImageUsecase;
+use crate::usecase::{
+    get_image_history::GetImageHistoryUsecase, inspect_image::InspectImageUsecase,
+    list_image::ListImageUsecase,
+};
 use std::error::Error;
 use termion::event::Key;
 use tui::{
@@ -75,7 +77,7 @@ pub async fn table<T: Client + Send + Sync + 'static>(
 
             let detail_area = Layout::default()
                 .direction(Direction::Vertical)
-                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+                .constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
                 .split(chunks[1]);
             let block = Block::default().borders(Borders::ALL).title(Span::styled(
                 "Detail",
@@ -110,19 +112,17 @@ pub async fn table<T: Client + Send + Sync + 'static>(
                 }
                 Key::Down => {
                     table.next();
-                    // TODO: 分解代入がリリースされたら差し替える（https://github.com/rust-lang/rust/issues/71126）
-                    let tuple =
+                    detail_text =
                         gen_detail_text(table.state.selected(), &images, &image_repository).await;
-                    detail_text = tuple.0;
-                    histories = tuple.1;
+                    histories =
+                        gen_history_text(table.state.selected(), &images, &image_repository).await;
                 }
                 Key::Up => {
                     table.previous();
-                    // TODO: 分解代入がリリースされたら差し替える（https://github.com/rust-lang/rust/issues/71126）
-                    let tuple =
+                    detail_text =
                         gen_detail_text(table.state.selected(), &images, &image_repository).await;
-                    detail_text = tuple.0;
-                    histories = tuple.1;
+                    histories =
+                        gen_history_text(table.state.selected(), &images, &image_repository).await;
                 }
                 Key::Right => {
                     tab.next();
@@ -158,7 +158,7 @@ async fn gen_detail_text<'a, T>(
     idx: Option<usize>,
     images: &Vec<Image>,
     image_repository: &'a ImageRepository<'a, T>,
-) -> (Vec<Spans<'a>>, Vec<Vec<String>>)
+) -> Vec<Spans<'a>>
 where
     T: Client + Send + Sync + 'static,
 {
@@ -168,30 +168,56 @@ where
             .inspect_image(image_id)
             .await;
         match detail {
-            Ok(v) => (
-                span::from_texts(vec![
-                    format!("id: {}", v.image.id),
-                    format!(
-                        "digest: {}",
-                        v.image.repo_digests.get(0).unwrap_or(&"".to_string())
-                    ),
-                    format!("os/arch: {}/{}", v.os, v.architecture),
-                    format!("entrypoint: {:?}", v.entrypoint),
-                    format!("cmd: {:?}", v.cmd),
-                    format!("env: {:?}", v.env),
-                    format!("labels: {:?}", v.image.labels),
-                ]),
-                vec![],
-            ),
-            Err(e) => (
-                span::from_texts(vec![format!("Failed to get container's details: {}", e)]),
-                vec![],
-            ),
+            Ok(v) => span::from_texts(vec![
+                format!("id: {}", v.image.id),
+                format!(
+                    "digest: {}",
+                    v.image.repo_digests.get(0).unwrap_or(&"".to_string())
+                ),
+                format!("os/arch: {}/{}", v.os, v.architecture),
+                format!("entrypoint: {:?}", v.entrypoint),
+                format!("cmd: {:?}", v.cmd),
+                format!("env: {:?}", v.env),
+                format!("labels: {:?}", v.image.labels),
+            ]),
+            Err(e) => span::from_texts(vec![format!("Failed to get container's details: {}", e)]),
         }
     } else {
-        (
-            span::from_texts(vec!["It shows container's details here"]),
-            vec![],
-        )
+        span::from_texts(vec!["It shows container's details here"])
+    }
+}
+
+async fn gen_history_text<'a, T>(
+    idx: Option<usize>,
+    images: &Vec<Image>,
+    image_repository: &'a ImageRepository<'a, T>,
+) -> Vec<Vec<String>>
+where
+    T: Client + Send + Sync + 'static,
+{
+    if let Some(v) = idx {
+        let image_id = &images[v].id;
+        let history = GetImageHistoryUsecase::new(image_repository)
+            .get_history(image_id)
+            .await;
+        match history {
+            Ok(v) => v
+                .into_iter()
+                .map(|r| {
+                    vec![
+                        r.id.split(':')
+                            .collect::<Vec<&str>>()
+                            .get(1)
+                            .map_or("none", |v| *v)
+                            .to_string(),
+                        r.created_by,
+                        r.size.to_string(),
+                    ]
+                })
+                .collect(),
+            Err(e) => vec![],
+        }
+    } else {
+        vec![]
     }
 }
