@@ -25,7 +25,7 @@ use tui::{
     Terminal,
 };
 
-pub async fn table<T: Client + Send + Sync + 'static>(
+pub async fn draw<T: Client + Send + Sync + 'static>(
     client: &T,
     terminal: &mut Terminal<impl Backend>,
     events: &Events,

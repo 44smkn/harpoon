@@ -35,7 +35,7 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let events = Events::new();
     let client = RestApi::<UnixConnector>::new("/var/run/docker.sock");
 
-    image::table(&client, &mut terminal, &events).await?;
+    image::draw(&client, &mut terminal, &events).await?;
 
     Ok(())
 }
