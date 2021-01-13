@@ -79,12 +79,9 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
                 .direction(Direction::Vertical)
                 .constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
                 .split(chunks[1]);
-            let block = Block::default().borders(Borders::ALL).title(Span::styled(
-                "Detail",
-                Style::default()
-                    .fg(Color::Magenta)
-                    .add_modifier(Modifier::BOLD),
-            ));
+            let block = Block::default()
+                .borders(Borders::ALL)
+                .title(Span::styled("Detail", Style::default().fg(Color::DarkGray)));
             let paragraph = Paragraph::new(detail_text.clone())
                 .block(block)
                 .wrap(Wrap { trim: true });
