@@ -215,7 +215,7 @@ where
                     ]
                 })
                 .collect(),
-            Err(e) => vec![],
+            Err(e) => vec![vec![e.to_string()]],
         }
     } else {
         vec![]
