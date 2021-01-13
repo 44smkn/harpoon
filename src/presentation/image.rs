@@ -94,9 +94,9 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
             let image_history = Table::new(header.iter(), history_table)
                 .block(Block::default().borders(Borders::ALL).title("History"))
                 .widths(&[
-                    Constraint::Percentage(30),
-                    Constraint::Percentage(60),
                     Constraint::Percentage(10),
+                    Constraint::Percentage(75),
+                    Constraint::Percentage(15),
                 ])
                 .column_spacing(1);
             f.render_widget(image_history, detail_area[1]);
@@ -205,7 +205,7 @@ where
                         r.id.split(':')
                             .collect::<Vec<&str>>()
                             .get(1)
-                            .map_or("none", |v| *v)
+                            .map_or("none", |v| &v[..8])
                             .to_string(),
                         r.created_by,
                         r.size.to_string(),
