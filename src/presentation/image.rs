@@ -1,6 +1,6 @@
-use crate::domain::image::Image;
 #[allow(unused_imports)]
 use crate::domain::image::ImageRepository as _;
+use crate::domain::image::{Image, ImageDetail};
 use crate::infrastructure::webapi::client::Client;
 use crate::infrastructure::webapi::rest::image_repository::ImageRepository;
 use crate::presentation::shared::{
@@ -51,7 +51,7 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
 
             let chunks = Layout::default()
                 .direction(Direction::Horizontal)
-                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+                .constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
                 .split(area[1]);
 
             tab.draw(f, area[0]);
@@ -69,9 +69,9 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
                 .highlight_style(selected_style)
                 .highlight_symbol(">> ")
                 .widths(&[
-                    Constraint::Percentage(50),
-                    Constraint::Length(30),
-                    Constraint::Max(10),
+                    Constraint::Percentage(65),
+                    Constraint::Percentage(10),
+                    Constraint::Percentage(25),
                 ]);
             f.render_stateful_widget(t, chunks[0], &mut table.state);
 
@@ -165,23 +165,33 @@ where
             .inspect_image(image_id)
             .await;
         match detail {
-            Ok(v) => span::from_texts(vec![
-                format!("id: {}", v.image.id),
-                format!(
-                    "digest: {}",
-                    v.image.repo_digests.get(0).unwrap_or(&"".to_string())
-                ),
-                format!("os/arch: {}/{}", v.os, v.architecture),
-                format!("entrypoint: {:?}", v.entrypoint),
-                format!("cmd: {:?}", v.cmd),
-                format!("env: {:?}", v.env),
-                format!("labels: {:?}", v.image.labels),
-            ]),
+            Ok(v) => format_detail_text(v),
             Err(e) => span::from_texts(vec![format!("Failed to get container's details: {}", e)]),
         }
     } else {
         span::from_texts(vec!["It shows container's details here"])
     }
+}
+
+fn format_detail_text<'a>(detail: ImageDetail) -> Vec<Spans<'a>> {
+    let mut texts = Vec::new();
+    texts.push(format!("id: {}", detail.image.id));
+    texts.push(format!("os/arch: {}/{}", detail.os, detail.architecture));
+    texts.push(format!("entrypoint: {:?}", detail.entrypoint));
+    texts.push(format!("cmd: {:?}", detail.cmd));
+
+    texts.push("environment variables: ".to_string());
+    detail
+        .env
+        .iter()
+        .for_each(|v| texts.push(format!("- {}", v)));
+
+    texts.push("labels: ".to_string());
+    for (k, v) in detail.image.labels.iter() {
+        texts.push(format!("- {}: {}", k, v));
+    }
+
+    span::from_texts(texts)
 }
 
 async fn gen_history_text<'a, T>(
