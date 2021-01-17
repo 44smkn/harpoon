@@ -5,7 +5,7 @@ use crate::infrastructure::webapi::client::Client;
 use crate::infrastructure::webapi::rest::image_repository::ImageRepository;
 use crate::presentation::shared::{
     event::{Event, Events},
-    span,
+    layout, span,
     table::StatefulTable,
     tabs,
 };
@@ -18,7 +18,7 @@ use std::error::Error;
 use termion::event::Key;
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout},
+    layout::Constraint,
     style::{Color, Modifier, Style},
     text::{Span, Spans},
     widgets::{Block, Borders, Paragraph, Row, Table, Wrap},
@@ -43,18 +43,17 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
     // Input
     loop {
         terminal.draw(|f| {
-            // define layout
-            let area = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints([Constraint::Percentage(10), Constraint::Percentage(90)].as_ref())
-                .split(f.size());
+            // TODO: Change it when split assignments are included in Rust's standard functions.
+            let areas = layout::split_into_header_and_main(f);
+            let header = areas.0;
+            let main = areas.1;
+            tab.draw(f, header);
 
-            let chunks = Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
-                .split(area[1]);
+            // TODO: Change it when split assignments are included in Rust's standard functions.
+            let areas = layout::split_into_horizontal_pains(main);
+            let left_pain = areas.0;
+            let right_pain = areas.1;
 
-            tab.draw(f, area[0]);
             let selected_style = Style::default()
                 .fg(Color::Yellow)
                 .add_modifier(Modifier::BOLD);
@@ -73,19 +72,20 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
                     Constraint::Percentage(10),
                     Constraint::Percentage(25),
                 ]);
-            f.render_stateful_widget(t, chunks[0], &mut table.state);
+            f.render_stateful_widget(t, left_pain, &mut table.state);
 
-            let detail_area = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
-                .split(chunks[1]);
+            // TODO: Change it when split assignments are included in Rust's standard functions.
+            let areas = layout::split_into_vertical_pains(right_pain);
+            let detail_up = areas.0;
+            let detail_down = areas.1;
+
             let block = Block::default()
                 .borders(Borders::ALL)
                 .title(Span::styled("Detail", Style::default().fg(Color::DarkGray)));
             let paragraph = Paragraph::new(detail_text.clone())
                 .block(block)
                 .wrap(Wrap { trim: true });
-            f.render_widget(paragraph, detail_area[0]);
+            f.render_widget(paragraph, detail_up);
 
             let history_table = histories
                 .iter()
@@ -99,7 +99,7 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
                     Constraint::Percentage(15),
                 ])
                 .column_spacing(1);
-            f.render_widget(image_history, detail_area[1]);
+            f.render_widget(image_history, detail_down);
         })?;
 
         if let Event::Input(key) = events.next()? {
