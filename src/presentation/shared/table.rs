@@ -60,7 +60,7 @@ impl<'a> StatefulTable {
         self.state.select(Some(i));
     }
 
-    pub fn render_selectable_table(&mut self, frame: &mut Frame<impl Backend>, rect: Rect) {
+    pub fn render(&mut self, frame: &mut Frame<impl Backend>, rect: Rect) {
         let selected_style = Style::default()
             .fg(Color::Yellow)
             .add_modifier(Modifier::BOLD);
@@ -77,11 +77,47 @@ impl<'a> StatefulTable {
             )
             .highlight_style(selected_style)
             .highlight_symbol(">> ")
-            .widths(&[
-                Constraint::Percentage(65),
-                Constraint::Percentage(10),
-                Constraint::Percentage(25),
-            ]);
+            .widths(&self.widths);
         frame.render_stateful_widget(t, rect, &mut self.state);
+    }
+}
+
+pub struct StatelessTable {
+    pub items: Vec<Vec<String>>,
+    pub title: String,
+    pub header: Vec<String>,
+    pub widths: Vec<Constraint>,
+}
+
+impl StatelessTable {
+    pub fn new(
+        items: Vec<Vec<String>>,
+        title: impl Into<String>,
+        header: Vec<impl Into<String>>,
+        widths: Vec<Constraint>,
+    ) -> StatelessTable {
+        StatelessTable {
+            items,
+            title: title.into(),
+            header: header.into_iter().map(|s| s.into()).collect(),
+            widths,
+        }
+    }
+
+    pub fn render(&self, frame: &mut Frame<impl Backend>, rect: Rect) {
+        let normal_style = Style::default().fg(Color::DarkGray);
+        let rows = self
+            .items
+            .iter()
+            .map(|i| Row::StyledData(i.iter(), normal_style));
+        let image_history = Table::new(self.header.iter(), rows)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title(self.title.clone()),
+            )
+            .widths(&self.widths)
+            .column_spacing(1);
+        frame.render_widget(image_history, rect);
     }
 }

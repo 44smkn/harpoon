@@ -6,7 +6,7 @@ use crate::infrastructure::webapi::rest::image_repository::ImageRepository;
 use crate::presentation::shared::{
     event::{Event, Events},
     layout, span,
-    table::StatefulTable,
+    table::{StatefulTable, StatelessTable},
     tabs,
 };
 
@@ -21,7 +21,7 @@ use tui::{
     layout::Constraint,
     style::{Color, Style},
     text::{Span, Spans},
-    widgets::{Block, Borders, Paragraph, Row, Table, Wrap},
+    widgets::{Block, Borders, Paragraph, Wrap},
     Terminal,
 };
 
@@ -30,21 +30,31 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
     terminal: &mut Terminal<impl Backend>,
     events: &Events,
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
+    let mut tab = tabs::TabsState::new_menu();
+
     let image_repository = ImageRepository::new(client);
     let mut images = ListImageUsecase::new(&image_repository)
         .list_image()
         .await?;
+
+    // image list table
     let items = images_to_table(&mut images);
     let header = vec!["NAME", "SIZE", "CREATED"];
+    let widths = vec![
+        Constraint::Percentage(65),
+        Constraint::Percentage(10),
+        Constraint::Percentage(25),
+    ];
+    let mut image_table = StatefulTable::new(items, "Images", header, widths);
+    let mut detail_text: Vec<Spans> = vec![Spans::from("It shows container's details here")];
+
+    let header = vec!["IMAGE ID", "CREATED BY", "SIZE"];
     let widths = vec![
         Constraint::Percentage(10),
         Constraint::Percentage(75),
         Constraint::Percentage(15),
     ];
-    let mut table = StatefulTable::new(items, "Images", header, widths);
-    let mut tab = tabs::TabsState::new_menu();
-    let mut detail_text: Vec<Spans> = vec![Spans::from("It shows container's details here")];
-    let mut histories: Vec<Vec<String>> = Vec::new();
+    let mut history_table = StatelessTable::new(vec![], "History", header, widths);
 
     // Input
     loop {
@@ -59,7 +69,7 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
             let areas = layout::split_into_horizontal_pains(main);
             let left_pain = areas.0;
             let right_pain = areas.1;
-            table.render_selectable_table(f, left_pain);
+            image_table.render(f, left_pain);
 
             // TODO: Change it when split assignments are included in Rust's standard functions.
             let areas = layout::split_into_vertical_pains(right_pain);
@@ -74,20 +84,7 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
                 .wrap(Wrap { trim: true });
             f.render_widget(paragraph, detail_up);
 
-            let normal_style = Style::default().fg(Color::DarkGray);
-            let history_table = histories
-                .iter()
-                .map(|i| Row::StyledData(i.iter(), normal_style));
-            let header = vec!["IMAGE ID", "CREATED BY", "SIZE"];
-            let image_history = Table::new(header.iter(), history_table)
-                .block(Block::default().borders(Borders::ALL).title("History"))
-                .widths(&[
-                    Constraint::Percentage(10),
-                    Constraint::Percentage(75),
-                    Constraint::Percentage(15),
-                ])
-                .column_spacing(1);
-            f.render_widget(image_history, detail_down);
+            history_table.render(f, detail_down);
         })?;
 
         if let Event::Input(key) = events.next()? {
@@ -96,18 +93,22 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
                     break;
                 }
                 Key::Down => {
-                    table.next();
+                    image_table.next();
                     detail_text =
-                        gen_detail_text(table.state.selected(), &images, &image_repository).await;
-                    histories =
-                        gen_history_text(table.state.selected(), &images, &image_repository).await;
+                        gen_detail_text(image_table.state.selected(), &images, &image_repository)
+                            .await;
+                    history_table.items =
+                        gen_history_text(image_table.state.selected(), &images, &image_repository)
+                            .await;
                 }
                 Key::Up => {
-                    table.previous();
+                    image_table.previous();
                     detail_text =
-                        gen_detail_text(table.state.selected(), &images, &image_repository).await;
-                    histories =
-                        gen_history_text(table.state.selected(), &images, &image_repository).await;
+                        gen_detail_text(image_table.state.selected(), &images, &image_repository)
+                            .await;
+                    history_table.items =
+                        gen_history_text(image_table.state.selected(), &images, &image_repository)
+                            .await;
                 }
                 Key::Right => {
                     tab.next();
