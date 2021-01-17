@@ -19,7 +19,7 @@ use termion::event::Key;
 use tui::{
     backend::Backend,
     layout::Constraint,
-    style::{Color, Modifier, Style},
+    style::{Color, Style},
     text::{Span, Spans},
     widgets::{Block, Borders, Paragraph, Row, Table, Wrap},
     Terminal,
@@ -35,7 +35,13 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
         .list_image()
         .await?;
     let items = images_to_table(&mut images);
-    let mut table = StatefulTable::new(items);
+    let header = vec!["NAME", "SIZE", "CREATED"];
+    let widths = vec![
+        Constraint::Percentage(10),
+        Constraint::Percentage(75),
+        Constraint::Percentage(15),
+    ];
+    let mut table = StatefulTable::new(items, "Images", header, widths);
     let mut tab = tabs::TabsState::new_menu();
     let mut detail_text: Vec<Spans> = vec![Spans::from("It shows container's details here")];
     let mut histories: Vec<Vec<String>> = Vec::new();
@@ -53,26 +59,7 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
             let areas = layout::split_into_horizontal_pains(main);
             let left_pain = areas.0;
             let right_pain = areas.1;
-
-            let selected_style = Style::default()
-                .fg(Color::Yellow)
-                .add_modifier(Modifier::BOLD);
-            let normal_style = Style::default().fg(Color::DarkGray);
-            let header = ["NAME", "SIZE", "CREATED"];
-            let rows = table
-                .items
-                .iter()
-                .map(|i| Row::StyledData(i.iter(), normal_style));
-            let t = Table::new(header.iter(), rows)
-                .block(Block::default().borders(Borders::ALL).title("Images"))
-                .highlight_style(selected_style)
-                .highlight_symbol(">> ")
-                .widths(&[
-                    Constraint::Percentage(65),
-                    Constraint::Percentage(10),
-                    Constraint::Percentage(25),
-                ]);
-            f.render_stateful_widget(t, left_pain, &mut table.state);
+            table.render_selectable_table(f, left_pain);
 
             // TODO: Change it when split assignments are included in Rust's standard functions.
             let areas = layout::split_into_vertical_pains(right_pain);
@@ -87,6 +74,7 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
                 .wrap(Wrap { trim: true });
             f.render_widget(paragraph, detail_up);
 
+            let normal_style = Style::default().fg(Color::DarkGray);
             let history_table = histories
                 .iter()
                 .map(|i| Row::StyledData(i.iter(), normal_style));
