@@ -1,6 +1,6 @@
+use crate::domain::image::Image;
 #[allow(unused_imports)]
 use crate::domain::image::ImageRepository as _;
-use crate::domain::image::{Image, ImageDetail};
 use crate::infrastructure::webapi::client::Client;
 use crate::infrastructure::webapi::rest::image_repository::ImageRepository;
 use crate::presentation::shared::{
@@ -12,7 +12,8 @@ use crate::presentation::shared::{
 };
 
 use crate::usecase::{
-    get_image_history::GetImageHistoryUsecase, inspect_image::InspectImageUsecase,
+    get_image_history::GetImageHistoryUsecase,
+    inspect_image::{InspectImageDto, InspectImageUsecase},
     list_image::ListImageUsecase,
 };
 use std::error::Error;
@@ -154,21 +155,21 @@ where
     }
 }
 
-fn format_detail_text<'a>(detail: ImageDetail) -> Vec<String> {
+fn format_detail_text<'a>(detail: InspectImageDto) -> Vec<String> {
     let mut texts = Vec::new();
-    texts.push(format!("id: {}", detail.image.id));
+    texts.push(format!("id: {}", detail.id));
     texts.push(format!("os/arch: {}/{}", detail.os, detail.architecture));
     texts.push(format!("entrypoint: {:?}", detail.entrypoint));
     texts.push(format!("cmd: {:?}", detail.cmd));
 
     texts.push("environment variables: ".to_string());
     detail
-        .env
+        .environment_variables
         .iter()
         .for_each(|v| texts.push(format!("- {}", v)));
 
     texts.push("labels: ".to_string());
-    for (k, v) in detail.image.labels.iter() {
+    for (k, v) in detail.labels.iter() {
         texts.push(format!("- {}: {}", k, v));
     }
 
