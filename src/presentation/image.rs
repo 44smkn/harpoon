@@ -12,8 +12,7 @@ use crate::presentation::shared::{
 };
 
 use crate::usecase::{
-    get_image_history::GetImageHistoryUsecase,
-    inspect_image::{InspectImageDto, InspectImageUsecase},
+    inspect_image::{HistoryRecord, InspectImageDto, InspectImageUsecase},
     list_image::ListImageUsecase,
 };
 use std::error::Error;
@@ -87,21 +86,18 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
                 }
                 Key::Down => {
                     image_table.next();
-                    paragraph.texts =
-                        gen_detail_text(image_table.state.selected(), &images, &image_repository)
-                            .await;
-                    history_table.items =
-                        gen_history_text(image_table.state.selected(), &images, &image_repository)
-                            .await;
+                    // TODO: Change it when split assignments are included in Rust's standard functions.
+                    let selected = image_table.state.selected();
+                    let detail = gen_detail_text(selected, &images, &image_repository).await;
+                    paragraph.texts = detail.0;
+                    history_table.items = detail.1;
                 }
                 Key::Up => {
                     image_table.previous();
-                    paragraph.texts =
-                        gen_detail_text(image_table.state.selected(), &images, &image_repository)
-                            .await;
-                    history_table.items =
-                        gen_history_text(image_table.state.selected(), &images, &image_repository)
-                            .await;
+                    let selected = image_table.state.selected();
+                    let detail = gen_detail_text(selected, &images, &image_repository).await;
+                    paragraph.texts = detail.0;
+                    history_table.items = detail.1;
                 }
                 Key::Right => {
                     tab.next();
@@ -137,7 +133,7 @@ async fn gen_detail_text<'a, T>(
     idx: Option<usize>,
     images: &Vec<Image>,
     image_repository: &'a ImageRepository<'a, T>,
-) -> Vec<String>
+) -> (Vec<String>, Vec<Vec<String>>)
 where
     T: Client + Send + Sync + 'static,
 {
@@ -147,15 +143,21 @@ where
             .inspect_image(image_id)
             .await;
         match detail {
-            Ok(v) => format_detail_text(v),
-            Err(e) => vec![format!("Failed to get container's details: {}", e)],
+            Ok(v) => (format_detail_text(&v), format_history_text(v.history)),
+            Err(e) => (
+                vec![format!("Failed to get container's details: {}", e)],
+                vec![],
+            ),
         }
     } else {
-        vec!["It shows container's details here".to_string()]
+        (
+            vec!["It shows container's details here".to_string()],
+            vec![],
+        )
     }
 }
 
-fn format_detail_text<'a>(detail: InspectImageDto) -> Vec<String> {
+fn format_detail_text<'a>(detail: &InspectImageDto) -> Vec<String> {
     let mut texts = Vec::new();
     texts.push(format!("id: {}", detail.id));
     texts.push(format!("os/arch: {}/{}", detail.os, detail.architecture));
@@ -176,37 +178,20 @@ fn format_detail_text<'a>(detail: InspectImageDto) -> Vec<String> {
     texts
 }
 
-async fn gen_history_text<'a, T>(
-    idx: Option<usize>,
-    images: &Vec<Image>,
-    image_repository: &'a ImageRepository<'a, T>,
-) -> Vec<Vec<String>>
-where
-    T: Client + Send + Sync + 'static,
-{
-    if let Some(v) = idx {
-        let image_id = &images[v].id;
-        let history = GetImageHistoryUsecase::new(image_repository)
-            .get_history(image_id)
-            .await;
-        match history {
-            Ok(v) => v
-                .into_iter()
-                .map(|r| {
-                    vec![
-                        r.id.split(':')
-                            .collect::<Vec<&str>>()
-                            .get(1)
-                            .map_or("none", |v| &v[..8])
-                            .to_string(),
-                        r.created_by,
-                        r.size.to_string(),
-                    ]
-                })
-                .collect(),
-            Err(e) => vec![vec![e.to_string()]],
-        }
-    } else {
-        vec![]
-    }
+fn format_history_text(records: Vec<HistoryRecord>) -> Vec<Vec<String>> {
+    records
+        .into_iter()
+        .map(|r| {
+            vec![
+                r.image_id
+                    .split(':')
+                    .collect::<Vec<&str>>()
+                    .get(1)
+                    .map_or("none", |v| &v[..8])
+                    .to_string(),
+                r.created_by,
+                r.size.to_string(),
+            ]
+        })
+        .collect()
 }
