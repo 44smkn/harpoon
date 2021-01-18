@@ -5,7 +5,8 @@ use crate::infrastructure::webapi::client::Client;
 use crate::infrastructure::webapi::rest::image_repository::ImageRepository;
 use crate::presentation::shared::{
     event::{Event, Events},
-    layout, span,
+    layout,
+    paragraph::SimpleParagraph,
     table::{StatefulTable, StatelessTable},
     tabs,
 };
@@ -16,14 +17,7 @@ use crate::usecase::{
 };
 use std::error::Error;
 use termion::event::Key;
-use tui::{
-    backend::Backend,
-    layout::Constraint,
-    style::{Color, Style},
-    text::{Span, Spans},
-    widgets::{Block, Borders, Paragraph, Wrap},
-    Terminal,
-};
+use tui::{backend::Backend, layout::Constraint, Terminal};
 
 pub async fn draw<T: Client + Send + Sync + 'static>(
     client: &T,
@@ -32,6 +26,7 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
 ) -> Result<(), Box<dyn Error + Send + Sync>> {
     let mut tab = tabs::TabsState::new_menu();
 
+    // TODO: グローバルな変数に持っていく？
     let image_repository = ImageRepository::new(client);
     let mut images = ListImageUsecase::new(&image_repository)
         .list_image()
@@ -46,8 +41,11 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
         Constraint::Percentage(25),
     ];
     let mut image_table = StatefulTable::new(items, "Images", header, widths);
-    let mut detail_text: Vec<Spans> = vec![Spans::from("It shows container's details here")];
 
+    // image detail paragraph
+    let mut paragraph = SimpleParagraph::new("Detail", vec!["It shows container's details here"]);
+
+    // image history table
     let header = vec!["IMAGE ID", "CREATED BY", "SIZE"];
     let widths = vec![
         Constraint::Percentage(10),
@@ -76,13 +74,7 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
             let detail_up = areas.0;
             let detail_down = areas.1;
 
-            let block = Block::default()
-                .borders(Borders::ALL)
-                .title(Span::styled("Detail", Style::default().fg(Color::DarkGray)));
-            let paragraph = Paragraph::new(detail_text.clone())
-                .block(block)
-                .wrap(Wrap { trim: true });
-            f.render_widget(paragraph, detail_up);
+            paragraph.render(f, detail_up);
 
             history_table.render(f, detail_down);
         })?;
@@ -94,7 +86,7 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
                 }
                 Key::Down => {
                     image_table.next();
-                    detail_text =
+                    paragraph.texts =
                         gen_detail_text(image_table.state.selected(), &images, &image_repository)
                             .await;
                     history_table.items =
@@ -103,7 +95,7 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
                 }
                 Key::Up => {
                     image_table.previous();
-                    detail_text =
+                    paragraph.texts =
                         gen_detail_text(image_table.state.selected(), &images, &image_repository)
                             .await;
                     history_table.items =
@@ -144,7 +136,7 @@ async fn gen_detail_text<'a, T>(
     idx: Option<usize>,
     images: &Vec<Image>,
     image_repository: &'a ImageRepository<'a, T>,
-) -> Vec<Spans<'a>>
+) -> Vec<String>
 where
     T: Client + Send + Sync + 'static,
 {
@@ -155,14 +147,14 @@ where
             .await;
         match detail {
             Ok(v) => format_detail_text(v),
-            Err(e) => span::from_texts(vec![format!("Failed to get container's details: {}", e)]),
+            Err(e) => vec![format!("Failed to get container's details: {}", e)],
         }
     } else {
-        span::from_texts(vec!["It shows container's details here"])
+        vec!["It shows container's details here".to_string()]
     }
 }
 
-fn format_detail_text<'a>(detail: ImageDetail) -> Vec<Spans<'a>> {
+fn format_detail_text<'a>(detail: ImageDetail) -> Vec<String> {
     let mut texts = Vec::new();
     texts.push(format!("id: {}", detail.image.id));
     texts.push(format!("os/arch: {}/{}", detail.os, detail.architecture));
@@ -180,7 +172,7 @@ fn format_detail_text<'a>(detail: ImageDetail) -> Vec<Spans<'a>> {
         texts.push(format!("- {}: {}", k, v));
     }
 
-    span::from_texts(texts)
+    texts
 }
 
 async fn gen_history_text<'a, T>(
