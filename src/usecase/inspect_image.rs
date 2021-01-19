@@ -8,7 +8,7 @@ pub struct InspectImageUsecase<'a, T: ImageRepository> {
 
 impl<'a, T: ImageRepository> InspectImageUsecase<'a, T> {
     pub fn new(image_repository: &'a T) -> Self {
-        InspectImageUsecase {
+        Self {
             repository: image_repository,
         }
     }
