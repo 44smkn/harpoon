@@ -53,7 +53,7 @@ where
         id: String,
     ) -> Result<domain::ImageDetail, Box<dyn Error + Send + Sync>> {
         let bytes = self.client.get(&format!("/images/{}/json", id)).await?;
-        let detail: ImageDetail = serde_json::from_slice(&bytes)?;
+        let detail: InspectImageOutput = serde_json::from_slice(&bytes)?;
         let bytes = self.client.get(&format!("/images/{}/history", id)).await?;
         let records: ImageHistory = serde_json::from_slice(&bytes)?;
         let mut items: domain::ImageHistory = Vec::new();
@@ -135,7 +135,7 @@ pub struct Image {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ImageDetail {
+pub struct InspectImageOutput {
     #[serde(rename = "Id")]
     pub id: String,
     #[serde(rename = "Container")]
