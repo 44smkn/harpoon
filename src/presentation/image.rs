@@ -1,8 +1,8 @@
 use crate::domain::image::Image;
 #[allow(unused_imports)]
-use crate::domain::image::ImageRepository as _;
+use crate::domain::image::ImageRepository;
 use crate::infrastructure::webapi::client::Client;
-use crate::infrastructure::webapi::rest::image_repository::ImageRepository;
+use crate::infrastructure::webapi::rest::image_repository::RestfulApiImageRepository;
 use crate::presentation::shared::{
     event::{Event, Events},
     layout,
@@ -27,7 +27,7 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
     let mut tab = tabs::TabsState::new_menu();
 
     // TODO: グローバルな変数に持っていく？
-    let image_repository = ImageRepository::new(client);
+    let image_repository = RestfulApiImageRepository::new(client);
     let mut images = ListImageUsecase::new(&image_repository)
         .list_image()
         .await?;
@@ -132,7 +132,7 @@ fn images_to_table(images: &mut Vec<Image>) -> Vec<Vec<String>> {
 async fn gen_detail_text<'a, T>(
     idx: Option<usize>,
     images: &Vec<Image>,
-    image_repository: &'a ImageRepository<'a, T>,
+    image_repository: &'a RestfulApiImageRepository<'a, T>,
 ) -> (Vec<String>, Vec<Vec<String>>)
 where
     T: Client + Send + Sync + 'static,
