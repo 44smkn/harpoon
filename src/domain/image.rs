@@ -27,7 +27,6 @@ pub struct ImageDetail {
     pub env: Vec<String>,
     pub entrypoint: Vec<String>,
     pub cmd: Vec<String>,
-    pub history: Vec<ImageRecord>,
 }
 
 pub type ImageHistory = Vec<ImageRecord>;

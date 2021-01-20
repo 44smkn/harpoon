@@ -49,17 +49,6 @@ where
     async fn inspect(&self, id: String) -> Result<ImageDetail, Box<dyn Error + Send + Sync>> {
         let bytes = self.client.get(&format!("/images/{}/json", id)).await?;
         let detail: types::ImageInspect = serde_json::from_slice(&bytes)?;
-        let bytes = self.client.get(&format!("/images/{}/history", id)).await?;
-        let records: Vec<types::HistoryResponseItem> = serde_json::from_slice(&bytes)?;
-        let mut items: ImageHistory = Vec::new();
-        for record in records.into_iter() {
-            let item = ImageRecord {
-                id: record.id,
-                created_by: record.created_by,
-                size: record.size,
-            };
-            items.push(item);
-        }
 
         Ok(ImageDetail {
             image: Image {
@@ -78,7 +67,6 @@ where
             env: detail.config.env,
             entrypoint: detail.config.entrypoint,
             cmd: detail.config.cmd.unwrap_or(vec!["".to_string()]),
-            history: items,
         })
     }
 
