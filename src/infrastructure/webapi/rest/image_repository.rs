@@ -66,7 +66,7 @@ where
             architecture: detail.architecture,
             env: detail.config.env,
             entrypoint: detail.config.entrypoint,
-            cmd: detail.config.cmd.unwrap_or(vec!["".to_string()]),
+            cmd: detail.config.cmd.unwrap_or_else(Vec::new),
         })
     }
 
