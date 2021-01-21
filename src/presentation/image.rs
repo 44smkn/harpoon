@@ -114,7 +114,7 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
 
 fn images_to_table(images: &mut Vec<ImageSummary>) -> Vec<Vec<String>> {
     let mut items: Vec<Vec<String>> = Vec::new();
-    for image in images.into_iter() {
+    for image in images.iter_mut() {
         if &image.repo_tags[0] == "<none>:<none>" {
             continue;
         }
