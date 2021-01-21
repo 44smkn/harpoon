@@ -156,7 +156,7 @@ where
     }
 }
 
-fn format_detail_text<'a>(detail: &InspectImageDto) -> Vec<String> {
+fn format_detail_text(detail: &InspectImageDto) -> Vec<String> {
     let mut texts = Vec::new();
     texts.push(format!("id: {}", detail.id));
     texts.push(format!("os/arch: {}/{}", detail.os, detail.architecture));
