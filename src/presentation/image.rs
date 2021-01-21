@@ -130,7 +130,7 @@ fn images_to_table(images: &mut Vec<ImageSummary>) -> Vec<Vec<String>> {
 
 async fn gen_detail_text<'a, T>(
     idx: Option<usize>,
-    images: &Vec<ImageSummary>,
+    images: &[ImageSummary],
     image_repository: &'a RestfulApiImageRepository<'a, T>,
 ) -> (Vec<String>, Vec<Vec<String>>)
 where
