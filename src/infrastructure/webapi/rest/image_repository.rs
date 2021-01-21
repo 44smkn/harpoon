@@ -1,4 +1,4 @@
-use crate::domain::image::{Image, ImageDetail, ImageHistory, ImageRecord, ImageRepository};
+use crate::domain::image::{ImageDetail, ImageHistory, ImageRecord, ImageRepository, ImageSummary};
 use crate::infrastructure::webapi::client::Client;
 use async_trait::async_trait;
 use chrono::prelude::*;
@@ -21,14 +21,14 @@ impl<'a, T> ImageRepository for RestfulApiImageRepository<'a, T>
 where
     T: Client + Send + Sync + 'static,
 {
-    async fn list(&self) -> Result<Vec<Image>, Box<dyn Error + Send + Sync>> {
+    async fn list(&self) -> Result<Vec<ImageSummary>, Box<dyn Error + Send + Sync>> {
         let bytes = self.client.get("/images/json").await?;
 
         let images: Vec<types::ImageSummary> = serde_json::from_slice(&bytes)?;
-        let mut items: Vec<Image> = Vec::new();
+        let mut items: Vec<ImageSummary> = Vec::new();
 
         for image in images.into_iter() {
-            let item = Image {
+            let item = ImageSummary {
                 id: image.id,
                 parent_id: image.parent_id,
                 repo_tags: image.repo_tags,
@@ -51,7 +51,7 @@ where
         let detail: types::ImageInspect = serde_json::from_slice(&bytes)?;
 
         Ok(ImageDetail {
-            image: Image {
+            image: ImageSummary {
                 id: detail.id,
                 parent_id: detail.parent,
                 repo_tags: detail.repo_tags,

@@ -1,4 +1,4 @@
-use crate::domain::image::{Image, ImageRepository};
+use crate::domain::image::{ImageRepository, ImageSummary};
 use std::error::Error;
 
 pub struct ListImageUsecase<'a, T: ImageRepository> {
@@ -12,7 +12,7 @@ impl<'a, T: ImageRepository> ListImageUsecase<'a, T> {
         }
     }
 
-    pub async fn list_image(&self) -> Result<Vec<Image>, Box<dyn Error + Send + Sync>> {
+    pub async fn list_image(&self) -> Result<Vec<ImageSummary>, Box<dyn Error + Send + Sync>> {
         let images = self.repository.list().await?;
         Ok(images)
     }

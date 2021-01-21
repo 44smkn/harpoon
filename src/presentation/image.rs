@@ -1,6 +1,5 @@
-use crate::domain::image::Image;
 #[allow(unused_imports)]
-use crate::domain::image::ImageRepository;
+use crate::domain::image::{ImageRepository, ImageSummary};
 use crate::infrastructure::webapi::client::Client;
 use crate::infrastructure::webapi::rest::image_repository::RestfulApiImageRepository;
 use crate::presentation::shared::{
@@ -113,7 +112,7 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
     Ok(())
 }
 
-fn images_to_table(images: &mut Vec<Image>) -> Vec<Vec<String>> {
+fn images_to_table(images: &mut Vec<ImageSummary>) -> Vec<Vec<String>> {
     let mut items: Vec<Vec<String>> = Vec::new();
     for image in images.into_iter() {
         if &image.repo_tags[0] == "<none>:<none>" {
@@ -131,7 +130,7 @@ fn images_to_table(images: &mut Vec<Image>) -> Vec<Vec<String>> {
 
 async fn gen_detail_text<'a, T>(
     idx: Option<usize>,
-    images: &Vec<Image>,
+    images: &Vec<ImageSummary>,
     image_repository: &'a RestfulApiImageRepository<'a, T>,
 ) -> (Vec<String>, Vec<Vec<String>>)
 where
