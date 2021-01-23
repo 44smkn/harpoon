@@ -30,9 +30,7 @@ where
         for image in images.into_iter() {
             let item = ImageSummary {
                 id: image.id,
-                parent_id: image.parent_id,
                 repo_tags: image.repo_tags,
-                repo_digests: image.repo_digests.unwrap_or_else(Vec::new),
                 created: DateTime::<Utc>::from_utc(
                     NaiveDateTime::from_timestamp(image.created, 0),
                     Utc,
@@ -53,9 +51,7 @@ where
         Ok(ImageDetail {
             image: ImageSummary {
                 id: detail.id,
-                parent_id: detail.parent,
                 repo_tags: detail.repo_tags,
-                repo_digests: detail.repo_digests,
                 created: DateTime::<Utc>::from(
                     DateTime::parse_from_rfc3339(&detail.created).unwrap(),
                 ),

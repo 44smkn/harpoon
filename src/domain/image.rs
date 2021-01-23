@@ -12,12 +12,16 @@ pub trait ImageRepository {
 
 pub struct ImageSummary {
     pub id: String,
-    pub parent_id: String,
     pub repo_tags: Vec<String>,
-    pub repo_digests: Vec<String>,
     pub created: DateTime<Utc>,
     pub size: i32,
     pub labels: HashMap<String, String>,
+}
+
+impl ImageSummary {
+    fn from_repository() -> Self {
+        unimplemented!()
+    }
 }
 
 pub struct ImageDetail {
