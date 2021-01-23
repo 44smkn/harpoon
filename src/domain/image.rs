@@ -6,7 +6,7 @@ use std::error::Error;
 #[async_trait]
 pub trait ImageRepository {
     async fn list(&self) -> Result<Vec<ImageSummary>, Box<dyn Error + Send + Sync>>;
-    async fn inspect(&self, id: String) -> Result<ImageDetail, Box<dyn Error + Send + Sync>>;
+    async fn inspect(&self, id: String) -> Result<Image, Box<dyn Error + Send + Sync>>;
     async fn history(&self, id: String) -> Result<ImageHistory, Box<dyn Error + Send + Sync>>;
 }
 
@@ -15,7 +15,6 @@ pub struct ImageSummary {
     pub repo_tags: Vec<String>,
     pub created: DateTime<Utc>,
     pub size: i32,
-    pub labels: HashMap<String, String>,
 }
 
 impl ImageSummary {
@@ -24,13 +23,15 @@ impl ImageSummary {
     }
 }
 
-pub struct ImageDetail {
-    pub image: ImageSummary,
+pub struct Image {
+    pub id: String,
+    pub repo_tags: Vec<String>,
     pub os: String,
     pub architecture: String,
     pub env: Vec<String>,
     pub entrypoint: Vec<String>,
     pub cmd: Vec<String>,
+    pub labels: HashMap<String, String>,
 }
 
 pub type ImageHistory = Vec<ImageRecord>;

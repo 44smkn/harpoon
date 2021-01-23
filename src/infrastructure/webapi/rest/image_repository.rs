@@ -1,4 +1,4 @@
-use crate::domain::image::{ImageDetail, ImageHistory, ImageRecord, ImageRepository, ImageSummary};
+use crate::domain::image::{Image, ImageHistory, ImageRecord, ImageRepository, ImageSummary};
 use crate::infrastructure::webapi::client::Client;
 use async_trait::async_trait;
 use chrono::prelude::*;
@@ -36,7 +36,6 @@ where
                     Utc,
                 ),
                 size: image.size,
-                labels: image.labels.unwrap_or_else(HashMap::new),
             };
             items.push(item);
         }
@@ -44,25 +43,19 @@ where
         Ok(items)
     }
 
-    async fn inspect(&self, id: String) -> Result<ImageDetail, Box<dyn Error + Send + Sync>> {
+    async fn inspect(&self, id: String) -> Result<Image, Box<dyn Error + Send + Sync>> {
         let bytes = self.client.get(&format!("/images/{}/json", id)).await?;
         let detail: types::ImageInspect = serde_json::from_slice(&bytes)?;
 
-        Ok(ImageDetail {
-            image: ImageSummary {
-                id: detail.id,
-                repo_tags: detail.repo_tags,
-                created: DateTime::<Utc>::from(
-                    DateTime::parse_from_rfc3339(&detail.created).unwrap(),
-                ),
-                size: detail.size,
-                labels: detail.container_config.labels.unwrap_or_else(HashMap::new),
-            },
+        Ok(Image {
+            id: detail.id,
+            repo_tags: detail.repo_tags,
             os: detail.os,
             architecture: detail.architecture,
             env: detail.config.env,
             entrypoint: detail.config.entrypoint,
             cmd: detail.config.cmd.unwrap_or_else(Vec::new),
+            labels: detail.container_config.labels.unwrap_or_else(HashMap::new),
         })
     }
 

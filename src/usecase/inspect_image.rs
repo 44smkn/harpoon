@@ -24,13 +24,13 @@ impl<'a, T: ImageRepository> InspectImageUsecase<'a, T> {
         let detail = detail.await?;
         let history = history.await?;
         let dto = InspectImageDto {
-            id: detail.image.id,
+            id: detail.id,
             os: detail.os,
             architecture: detail.architecture,
             entrypoint: detail.entrypoint,
             cmd: detail.cmd,
             environment_variables: detail.env,
-            labels: detail.image.labels,
+            labels: detail.labels,
             history: history
                 .into_iter()
                 .map(|v| HistoryRecord {
