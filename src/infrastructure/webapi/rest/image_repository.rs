@@ -1,8 +1,6 @@
 use crate::domain::image::{Image, ImageHistory, ImageRecord, ImageRepository, ImageSummary};
 use crate::infrastructure::webapi::client::Client;
 use async_trait::async_trait;
-use chrono::prelude::*;
-use chrono::NaiveDateTime;
 use std::collections::HashMap;
 use std::error::Error;
 
@@ -25,21 +23,10 @@ where
         let bytes = self.client.get("/images/json").await?;
 
         let images: Vec<types::ImageSummary> = serde_json::from_slice(&bytes)?;
-        let mut items: Vec<ImageSummary> = Vec::new();
-
-        for image in images.into_iter() {
-            let item = ImageSummary {
-                id: image.id,
-                repo_tags: image.repo_tags,
-                created: DateTime::<Utc>::from_utc(
-                    NaiveDateTime::from_timestamp(image.created, 0),
-                    Utc,
-                ),
-                size: image.size,
-            };
-            items.push(item);
-        }
-
+        let items = images
+            .into_iter()
+            .map(|v| ImageSummary::from_repository(v.id, v.repo_tags, v.created, v.size))
+            .collect();
         Ok(items)
     }
 
