@@ -1,4 +1,4 @@
-use crate::domain::image::{ImageRepository, ImageSummary};
+use domain::image::{ImageRepository, ImageSummary};
 use std::error::Error;
 
 pub struct ListImageUsecase<'a, T: ImageRepository> {

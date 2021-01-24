@@ -1,0 +1,17 @@
+[package]
+name = "infrastructure"
+version = "0.1.0"
+authors = ["Kenji Shimizu <jrywm121@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+hyperlocal = "0.7"
+hyper = { version = "0.13.9", features = ["stream"] }
+futures-util = "0.3.1"
+async-trait = "0.1.42"
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }
+domain = { path = "../domain" }

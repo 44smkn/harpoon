@@ -1,6 +1,6 @@
-use crate::domain::image::{Image, ImageHistory, ImageRecord, ImageRepository, ImageSummary};
-use crate::infrastructure::webapi::client::Client;
+use crate::webapi::client::Client;
 use async_trait::async_trait;
+use domain::image::{Image, ImageHistory, ImageRecord, ImageRepository, ImageSummary};
 use std::collections::HashMap;
 use std::error::Error;
 
@@ -63,7 +63,7 @@ where
 }
 
 mod types {
-    use crate::infrastructure::shared::date_format;
+    use crate::shared::date_format;
     use chrono::{DateTime, Utc};
     use serde::Deserialize;
     use std::collections::HashMap;

@@ -1,4 +1,4 @@
-use crate::domain::image::ImageRepository;
+use domain::image::ImageRepository;
 use std::collections::HashMap;
 use std::error::Error;
 
@@ -13,10 +13,7 @@ impl<'a, T: ImageRepository> InspectImageUsecase<'a, T> {
         }
     }
 
-    pub async fn inspect_image(
-        &self,
-        id: impl Into<String>,
-    ) -> Result<InspectImageDto, Box<dyn Error + Send + Sync>> {
+    pub async fn inspect_image(&self, id: impl Into<String>) -> Result<InspectImageDto, Box<dyn Error + Send + Sync>> {
         let id = id.into();
         let detail = self.repository.inspect(id.clone());
         let history = self.repository.history(id);

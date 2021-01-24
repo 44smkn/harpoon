@@ -1,0 +1,15 @@
+[package]
+name = "harpoon"
+version = "0.1.0"
+authors = ["Kenji Shimizu <jrywm121@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+
+[dependencies]
+clap = "3.0.0-beta.2"
+hyperlocal = "0.7"
+tokio = { version = "0.2.6", features = ["uds", "stream", "macros"] }
+infrastructure = { path = "../infrastructure" }
+presentation = { path = "../presentation" }

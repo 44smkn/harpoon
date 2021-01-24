@@ -1,22 +1,22 @@
-#[allow(unused_imports)]
-use crate::domain::image::{ImageRepository, ImageSummary};
-use crate::infrastructure::webapi::client::Client;
-use crate::infrastructure::webapi::rest::image_repository::RestfulApiImageRepository;
-use crate::presentation::shared::{
+use crate::shared::{
     event::{Event, Events},
     layout,
     paragraph::SimpleParagraph,
     table::{StatefulTable, StatelessTable},
     tabs,
 };
+#[allow(unused_imports)]
+use domain::image::{ImageRepository, ImageSummary};
+use infrastructure::webapi::client::Client;
+use infrastructure::webapi::rest::image_repository::RestfulApiImageRepository;
 
-use crate::usecase::{
-    inspect_image::{HistoryRecord, InspectImageDto, InspectImageUsecase},
-    list_image::ListImageUsecase,
-};
 use std::error::Error;
 use termion::event::Key;
 use tui::{backend::Backend, layout::Constraint, Terminal};
+use usecase::{
+    inspect_image::{HistoryRecord, InspectImageDto, InspectImageUsecase},
+    list_image::ListImageUsecase,
+};
 
 pub async fn draw<T: Client + Send + Sync + 'static>(
     client: &T,
@@ -27,9 +27,7 @@ pub async fn draw<T: Client + Send + Sync + 'static>(
 
     // TODO: グローバルな変数に持っていく？
     let image_repository = RestfulApiImageRepository::new(client);
-    let mut images = ListImageUsecase::new(&image_repository)
-        .list_image()
-        .await?;
+    let mut images = ListImageUsecase::new(&image_repository).list_image().await?;
 
     // image list table
     let items = images_to_table(&mut images);
@@ -138,21 +136,13 @@ where
 {
     if let Some(v) = idx {
         let image_id = &images[v].id;
-        let detail = InspectImageUsecase::new(image_repository)
-            .inspect_image(image_id)
-            .await;
+        let detail = InspectImageUsecase::new(image_repository).inspect_image(image_id).await;
         match detail {
             Ok(v) => (format_detail_text(&v), format_history_text(v.history)),
-            Err(e) => (
-                vec![format!("Failed to get container's details: {}", e)],
-                vec![],
-            ),
+            Err(e) => (vec![format!("Failed to get container's details: {}", e)], vec![]),
         }
     } else {
-        (
-            vec!["It shows container's details here".to_string()],
-            vec![],
-        )
+        (vec!["It shows container's details here".to_string()], vec![])
     }
 }
 

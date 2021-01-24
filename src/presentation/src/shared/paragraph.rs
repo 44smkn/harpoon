@@ -1,4 +1,4 @@
-use crate::presentation::shared::span;
+use crate::shared::span;
 use tui::{
     backend::Backend,
     layout::Rect,
@@ -22,10 +22,9 @@ impl SimpleParagraph {
     }
 
     pub fn render(&self, frame: &mut Frame<impl Backend>, rect: Rect) {
-        let block = Block::default().borders(Borders::ALL).title(Span::styled(
-            &self.title,
-            Style::default().fg(Color::DarkGray),
-        ));
+        let block = Block::default()
+            .borders(Borders::ALL)
+            .title(Span::styled(&self.title, Style::default().fg(Color::DarkGray)));
         let paragraph = Paragraph::new(span::from_texts(self.texts.clone()))
             .block(block)
             .wrap(Wrap { trim: true });

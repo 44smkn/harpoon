@@ -1,14 +1,9 @@
-mod domain;
-mod infrastructure;
-mod presentation;
-mod usecase;
-
-use crate::infrastructure::webapi::rest::client::RestApi;
-use crate::presentation::image;
-use crate::presentation::shared::event::Events;
-use crate::presentation::shared::init;
 use clap::Clap;
 use hyperlocal::UnixConnector;
+use infrastructure::webapi::rest::client::RestApi;
+use presentation::image;
+use presentation::shared::event::Events;
+use presentation::shared::init;
 use std::error::Error;
 
 #[allow(dead_code)]
@@ -26,9 +21,9 @@ struct Opts {
 }
 
 #[tokio::main]
+#[allow(unused_variables)]
 async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let opts: Opts = Opts::parse();
-    println!("Value for config: {}", opts.api_version);
 
     // Terminal initialization
     let mut terminal = init::terminal()?;

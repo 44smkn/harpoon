@@ -1,4 +1,4 @@
-use crate::infrastructure::webapi::client::Client;
+use crate::webapi::client::Client;
 use async_trait::async_trait;
 use futures_util::stream::TryStreamExt;
 use hyper::client::connect::{Connect, HttpConnector};
