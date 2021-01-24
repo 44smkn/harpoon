@@ -9,7 +9,5 @@ edition = "2018"
 
 [dependencies]
 clap = "3.0.0-beta.2"
-hyperlocal = "0.7"
 tokio = { version = "0.2.6", features = ["uds", "stream", "macros"] }
-infrastructure = { path = "../infrastructure" }
 presentation = { path = "../presentation" }

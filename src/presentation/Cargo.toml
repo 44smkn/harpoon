@@ -12,6 +12,7 @@ default = ["termion"]
 [dependencies]
 tui = "0.13.0"
 termion = { version = "1.5", optional = true }
+hyperlocal = "0.7"
 infrastructure = { path = "../infrastructure" }
 usecase = { path = "../usecase" }
 domain = { path = "../domain" }

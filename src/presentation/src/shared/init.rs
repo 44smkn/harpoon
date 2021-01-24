@@ -1,3 +1,7 @@
+use crate::image;
+use crate::shared::event::Events;
+use hyperlocal::UnixConnector;
+use infrastructure::webapi::rest::client::RestApi;
 use std::error::Error;
 use std::io;
 use termion::{input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
@@ -6,7 +10,16 @@ use tui::{
     Terminal,
 };
 
-pub fn terminal() -> Result<Terminal<impl Backend>, Box<dyn Error + Send + Sync>> {
+pub async fn draw_by_default() -> Result<(), Box<dyn Error + Send + Sync>> {
+    // Terminal initialization
+    let mut terminal = terminal()?;
+    let events = Events::new();
+    let client = RestApi::<UnixConnector>::new("/var/run/docker.sock");
+    image::draw(&client, &mut terminal, &events).await?;
+    Ok(())
+}
+
+fn terminal() -> Result<Terminal<impl Backend>, Box<dyn Error + Send + Sync>> {
     // Terminal initialization
     let stdout = io::stdout().into_raw_mode()?;
     let stdout = MouseTerminal::from(stdout);

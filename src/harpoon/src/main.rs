@@ -1,8 +1,4 @@
 use clap::Clap;
-use hyperlocal::UnixConnector;
-use infrastructure::webapi::rest::client::RestApi;
-use presentation::image;
-use presentation::shared::event::Events;
 use presentation::shared::init;
 use std::error::Error;
 
@@ -25,12 +21,6 @@ struct Opts {
 async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let opts: Opts = Opts::parse();
 
-    // Terminal initialization
-    let mut terminal = init::terminal()?;
-    let events = Events::new();
-    let client = RestApi::<UnixConnector>::new("/var/run/docker.sock");
-
-    image::draw(&client, &mut terminal, &events).await?;
-
+    init::draw_by_default().await?;
     Ok(())
 }
