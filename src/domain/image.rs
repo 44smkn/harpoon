@@ -18,12 +18,7 @@ pub struct ImageSummary {
 }
 
 impl ImageSummary {
-    pub fn from_repository(
-        id: String,
-        repo_tags: Vec<String>,
-        created: DateTime<Utc>,
-        size: i32,
-    ) -> Self {
+    pub fn from_repository(id: String, repo_tags: Vec<String>, created: DateTime<Utc>, size: i32) -> Self {
         Self {
             id,
             repo_tags,
