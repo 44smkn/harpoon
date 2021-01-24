@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use chrono::NaiveDateTime;
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 use std::error::Error;
@@ -19,11 +18,16 @@ pub struct ImageSummary {
 }
 
 impl ImageSummary {
-    pub fn from_repository(id: String, repo_tags: Vec<String>, created: i64, size: i32) -> Self {
+    pub fn from_repository(
+        id: String,
+        repo_tags: Vec<String>,
+        created: DateTime<Utc>,
+        size: i32,
+    ) -> Self {
         Self {
             id,
             repo_tags,
-            created: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(created, 0), Utc),
+            created,
             size,
         }
     }

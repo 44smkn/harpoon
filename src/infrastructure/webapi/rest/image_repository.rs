@@ -25,7 +25,7 @@ where
         let images: Vec<types::ImageSummary> = serde_json::from_slice(&bytes)?;
         let items = images
             .into_iter()
-            .map(|v| ImageSummary::from_repository(v.id, v.repo_tags, v.created, v.size))
+            .map(|v| ImageSummary::from_repository(v.id, v.repo_tags, v.created.unwrap(), v.size))
             .collect();
         Ok(items)
     }
@@ -63,10 +63,12 @@ where
 }
 
 mod types {
-    use serde::{Deserialize, Serialize};
+    use crate::infrastructure::shared::date_format;
+    use chrono::{DateTime, Utc};
+    use serde::Deserialize;
     use std::collections::HashMap;
 
-    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
     #[serde(rename_all = "camelCase")]
     pub struct ImageSummary {
         #[serde(rename = "Id")]
@@ -77,8 +79,8 @@ mod types {
         pub repo_tags: Vec<String>,
         #[serde(rename = "RepoDigests")]
         pub repo_digests: Option<Vec<String>>,
-        #[serde(rename = "Created")]
-        pub created: i64,
+        #[serde(rename = "Created", with = "date_format")]
+        pub created: Option<DateTime<Utc>>,
         #[serde(rename = "Size")]
         pub size: i32,
         #[serde(rename = "VirtualSize")]
@@ -90,7 +92,7 @@ mod types {
         #[serde(rename = "Containers")]
         pub containers: i32,
     }
-    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
     #[serde(rename_all = "camelCase")]
     pub struct ImageInspect {
         #[serde(rename = "Id")]
@@ -128,7 +130,7 @@ mod types {
         #[serde(rename = "RootFS")]
         pub root_fs: RootFs,
     }
-    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
     #[serde(rename_all = "camelCase")]
     pub struct ContainerConfig {
         #[serde(rename = "Tty")]
@@ -170,7 +172,7 @@ mod types {
         #[serde(rename = "Entrypoint")]
         pub entrypoint: Vec<String>,
     }
-    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
     #[serde(rename_all = "camelCase")]
     pub struct GraphDriver {
         #[serde(rename = "Name")]
@@ -178,10 +180,10 @@ mod types {
         #[serde(rename = "Data")]
         pub data: Data,
     }
-    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
     #[serde(rename_all = "camelCase")]
     pub struct Data {}
-    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
     #[serde(rename_all = "camelCase")]
     pub struct Config {
         #[serde(rename = "Image")]
@@ -223,7 +225,7 @@ mod types {
         #[serde(rename = "Entrypoint")]
         pub entrypoint: Vec<String>,
     }
-    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
     #[serde(rename_all = "camelCase")]
     pub struct RootFs {
         #[serde(rename = "Type")]
@@ -232,7 +234,7 @@ mod types {
         pub layers: Vec<String>,
     }
 
-    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
     #[serde(rename_all = "camelCase")]
     pub struct HistoryResponseItem {
         #[serde(rename = "Id")]
