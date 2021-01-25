@@ -6,7 +6,7 @@ use crate::shared::{
     tabs,
 };
 #[allow(unused_imports)]
-use domain::image::{ImageRepository, ImageSummary};
+use domain::image::ImageSummary;
 use infrastructure::webapi::client::Client;
 use infrastructure::webapi::rest::image_repository::RestfulApiImageRepository;
 
@@ -17,6 +17,12 @@ use usecase::{
     inspect_image::{HistoryRecord, InspectImageDto, InspectImageUsecase},
     list_image::ListImageUsecase,
 };
+
+#[allow(dead_code)]
+pub struct ImageTuiController<'a> {
+    list_usecase: ListImageUsecase<'a>,
+    inspect_usecase: InspectImageUsecase<'a>,
+}
 
 pub async fn draw<T: Client + Send + Sync + 'static>(
     client: &T,

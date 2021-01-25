@@ -1,4 +1,4 @@
-use crate::image;
+use crate::image::tui_controller as image_controller;
 use crate::shared::event::Events;
 use hyperlocal::UnixConnector;
 use infrastructure::webapi::rest::client::RestApi;
@@ -15,7 +15,7 @@ pub async fn draw_by_default() -> Result<(), Box<dyn Error + Send + Sync>> {
     let mut terminal = terminal()?;
     let events = Events::new();
     let client = RestApi::<UnixConnector>::new("/var/run/docker.sock");
-    image::draw(&client, &mut terminal, &events).await?;
+    image_controller::draw(&client, &mut terminal, &events).await?;
     Ok(())
 }
 

@@ -1,12 +1,12 @@
 use domain::image::{ImageRepository, ImageSummary};
 use std::error::Error;
 
-pub struct ListImageUsecase<'a, T: ImageRepository> {
-    repository: &'a T,
+pub struct ListImageUsecase<'a> {
+    repository: &'a dyn ImageRepository,
 }
 
-impl<'a, T: ImageRepository> ListImageUsecase<'a, T> {
-    pub fn new(image_repository: &'a T) -> Self {
+impl<'a> ListImageUsecase<'a> {
+    pub fn new(image_repository: &'a dyn ImageRepository) -> Self {
         Self {
             repository: image_repository,
         }

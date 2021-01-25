@@ -2,12 +2,12 @@ use domain::image::ImageRepository;
 use std::collections::HashMap;
 use std::error::Error;
 
-pub struct InspectImageUsecase<'a, T: ImageRepository> {
-    repository: &'a T,
+pub struct InspectImageUsecase<'a> {
+    repository: &'a dyn ImageRepository,
 }
 
-impl<'a, T: ImageRepository> InspectImageUsecase<'a, T> {
-    pub fn new(image_repository: &'a T) -> Self {
+impl<'a> InspectImageUsecase<'a> {
+    pub fn new(image_repository: &'a dyn ImageRepository) -> Self {
         Self {
             repository: image_repository,
         }
