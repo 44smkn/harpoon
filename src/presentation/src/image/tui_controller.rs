@@ -7,8 +7,6 @@ use crate::shared::{
 };
 #[allow(unused_imports)]
 use domain::image::ImageSummary;
-use infrastructure::webapi::client::Client;
-use infrastructure::webapi::rest::image_repository::RestfulApiImageRepository;
 
 use std::error::Error;
 use termion::event::Key;
@@ -31,98 +29,86 @@ impl<'a> ImageTuiController<'a> {
             inspect_usecase,
         }
     }
-}
 
-pub async fn draw<T: Client + Send + Sync + 'static>(
-    client: &T,
-    terminal: &mut Terminal<impl Backend>,
-    events: &Events,
-) -> Result<(), Box<dyn Error + Send + Sync>> {
-    let mut tab = tabs::TabsState::new_menu();
+    pub async fn draw(
+        &self,
+        terminal: &mut Terminal<impl Backend>,
+        events: &Events,
+    ) -> Result<(), Box<dyn Error + Send + Sync>> {
+        let mut tab = tabs::TabsState::new_menu();
 
-    // TODO: グローバルな変数に持っていく？
-    let image_repository = RestfulApiImageRepository::new(client);
-    let mut images = ListImageUsecase::new(&image_repository).list_image().await?;
-
-    // image list table
-    let items = images_to_table(&mut images);
-    let header = vec!["NAME", "SIZE", "CREATED"];
-    let widths = vec![
-        Constraint::Percentage(65),
-        Constraint::Percentage(10),
-        Constraint::Percentage(25),
-    ];
-    let mut image_table = StatefulTable::new(items, "Images", header, widths);
-
-    // image detail paragraph
-    let mut paragraph = SimpleParagraph::new("Detail", vec!["It shows container's details here"]);
-
-    // image history table
-    let header = vec!["IMAGE ID", "CREATED BY", "SIZE"];
-    let widths = vec![
-        Constraint::Percentage(10),
-        Constraint::Percentage(75),
-        Constraint::Percentage(15),
-    ];
-    let mut history_table = StatelessTable::new(vec![], "History", header, widths);
-
-    // Input
-    loop {
-        terminal.draw(|f| {
-            // TODO: Change it when split assignments are included in Rust's standard functions.
-            let areas = layout::split_into_header_and_main(f);
-            let header = areas.0;
-            let main = areas.1;
-            tab.draw(f, header);
-
-            // TODO: Change it when split assignments are included in Rust's standard functions.
-            let areas = layout::split_into_horizontal_pains(main);
-            let left_pain = areas.0;
-            let right_pain = areas.1;
-            image_table.render(f, left_pain);
-
-            // TODO: Change it when split assignments are included in Rust's standard functions.
-            let areas = layout::split_into_vertical_pains(right_pain);
-            let detail_up = areas.0;
-            let detail_down = areas.1;
-
-            paragraph.render(f, detail_up);
-
-            history_table.render(f, detail_down);
-        })?;
-
-        if let Event::Input(key) = events.next()? {
-            match key {
-                Key::Char('q') => {
-                    break;
+        let mut images = self.list_usecase.list_image().await?;
+        // image list table
+        let items = images_to_table(&mut images);
+        let header = vec!["NAME", "SIZE", "CREATED"];
+        let widths = vec![
+            Constraint::Percentage(65),
+            Constraint::Percentage(10),
+            Constraint::Percentage(25),
+        ];
+        let mut image_table = StatefulTable::new(items, "Images", header, widths);
+        // image detail paragraph
+        let mut paragraph = SimpleParagraph::new("Detail", vec!["It shows container's details here"]);
+        // image history table
+        let header = vec!["IMAGE ID", "CREATED BY", "SIZE"];
+        let widths = vec![
+            Constraint::Percentage(10),
+            Constraint::Percentage(75),
+            Constraint::Percentage(15),
+        ];
+        let mut history_table = StatelessTable::new(vec![], "History", header, widths);
+        // Input
+        loop {
+            terminal.draw(|f| {
+                // TODO: Change it when split assignments are included in Rust's standard functions.
+                let areas = layout::split_into_header_and_main(f);
+                let header = areas.0;
+                let main = areas.1;
+                tab.draw(f, header);
+                // TODO: Change it when split assignments are included in Rust's standard functions.
+                let areas = layout::split_into_horizontal_pains(main);
+                let left_pain = areas.0;
+                let right_pain = areas.1;
+                image_table.render(f, left_pain);
+                // TODO: Change it when split assignments are included in Rust's standard functions.
+                let areas = layout::split_into_vertical_pains(right_pain);
+                let detail_up = areas.0;
+                let detail_down = areas.1;
+                paragraph.render(f, detail_up);
+                history_table.render(f, detail_down);
+            })?;
+            if let Event::Input(key) = events.next()? {
+                match key {
+                    Key::Char('q') => {
+                        break;
+                    }
+                    Key::Down => {
+                        image_table.next();
+                        // TODO: Change it when split assignments are included in Rust's standard functions.
+                        let selected = image_table.state.selected();
+                        let detail = gen_detail_text(selected, &images, self.inspect_usecase).await;
+                        paragraph.texts = detail.0;
+                        history_table.items = detail.1;
+                    }
+                    Key::Up => {
+                        image_table.previous();
+                        let selected = image_table.state.selected();
+                        let detail = gen_detail_text(selected, &images, self.inspect_usecase).await;
+                        paragraph.texts = detail.0;
+                        history_table.items = detail.1;
+                    }
+                    Key::Right => {
+                        tab.next();
+                    }
+                    Key::Left => {
+                        tab.previous();
+                    }
+                    _ => {}
                 }
-                Key::Down => {
-                    image_table.next();
-                    // TODO: Change it when split assignments are included in Rust's standard functions.
-                    let selected = image_table.state.selected();
-                    let detail = gen_detail_text(selected, &images, &image_repository).await;
-                    paragraph.texts = detail.0;
-                    history_table.items = detail.1;
-                }
-                Key::Up => {
-                    image_table.previous();
-                    let selected = image_table.state.selected();
-                    let detail = gen_detail_text(selected, &images, &image_repository).await;
-                    paragraph.texts = detail.0;
-                    history_table.items = detail.1;
-                }
-                Key::Right => {
-                    tab.next();
-                }
-                Key::Left => {
-                    tab.previous();
-                }
-                _ => {}
-            }
-        };
+            };
+        }
+        Ok(())
     }
-
-    Ok(())
 }
 
 fn images_to_table(images: &mut Vec<ImageSummary>) -> Vec<Vec<String>> {
@@ -141,17 +127,14 @@ fn images_to_table(images: &mut Vec<ImageSummary>) -> Vec<Vec<String>> {
     items
 }
 
-async fn gen_detail_text<'a, T>(
+async fn gen_detail_text<'a>(
     idx: Option<usize>,
     images: &[ImageSummary],
-    image_repository: &'a RestfulApiImageRepository<'a, T>,
-) -> (Vec<String>, Vec<Vec<String>>)
-where
-    T: Client + Send + Sync + 'static,
-{
+    inspect_image_usecase: &'a InspectImageUsecase<'a>,
+) -> (Vec<String>, Vec<Vec<String>>) {
     if let Some(v) = idx {
         let image_id = &images[v].id;
-        let detail = InspectImageUsecase::new(image_repository).inspect_image(image_id).await;
+        let detail = inspect_image_usecase.inspect_image(image_id).await;
         match detail {
             Ok(v) => (format_detail_text(&v), format_history_text(v.history)),
             Err(e) => (vec![format!("Failed to get container's details: {}", e)], vec![]),

@@ -1,7 +1,8 @@
-use crate::image::tui_controller as image_controller;
+use crate::image::tui_controller::ImageTuiController;
 use crate::shared::event::Events;
 use hyperlocal::UnixConnector;
 use infrastructure::webapi::rest::client::RestApi;
+use infrastructure::webapi::rest::image_repository::RestfulApiImageRepository;
 use std::error::Error;
 use std::io;
 use termion::{input::MouseTerminal, raw::IntoRawMode, screen::AlternateScreen};
@@ -9,13 +10,20 @@ use tui::{
     backend::{Backend, TermionBackend},
     Terminal,
 };
+use usecase::{inspect_image::InspectImageUsecase, list_image::ListImageUsecase};
 
 pub async fn draw_by_default() -> Result<(), Box<dyn Error + Send + Sync>> {
     // Terminal initialization
     let mut terminal = terminal()?;
     let events = Events::new();
+
+    // image
     let client = RestApi::<UnixConnector>::new("/var/run/docker.sock");
-    image_controller::draw(&client, &mut terminal, &events).await?;
+    let image_repository = RestfulApiImageRepository::new(&client);
+    let list_image_usecase = ListImageUsecase::new(&image_repository);
+    let inspect_image_usecase = InspectImageUsecase::new(&image_repository);
+    let image_controller = ImageTuiController::new(&list_image_usecase, &inspect_image_usecase);
+    image_controller.draw(&mut terminal, &events).await?;
     Ok(())
 }
 
