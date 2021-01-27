@@ -20,8 +20,17 @@ use usecase::{
 
 #[allow(dead_code)]
 pub struct ImageTuiController<'a> {
-    list_usecase: ListImageUsecase<'a>,
-    inspect_usecase: InspectImageUsecase<'a>,
+    list_usecase: &'a ListImageUsecase<'a>,
+    inspect_usecase: &'a InspectImageUsecase<'a>,
+}
+
+impl<'a> ImageTuiController<'a> {
+    pub fn new(list_usecase: &'a ListImageUsecase<'a>, inspect_usecase: &'a InspectImageUsecase) -> Self {
+        Self {
+            list_usecase,
+            inspect_usecase,
+        }
+    }
 }
 
 pub async fn draw<T: Client + Send + Sync + 'static>(
