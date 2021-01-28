@@ -121,7 +121,7 @@ fn images_to_table(images: &mut Vec<ImageSummary>) -> Vec<Vec<String>> {
         row.push(std::mem::take(&mut image.repo_tags[0]));
         let size = f64::from(image.size) / 1000000.0;
         row.push(format!("{:.2}MB", size));
-        row.push(image.created.format("%Y-%m-%d %H:%M:%S").to_string());
+        row.push(image.created.format("%Y-%m-%d").to_string());
         items.push(row);
     }
     items
