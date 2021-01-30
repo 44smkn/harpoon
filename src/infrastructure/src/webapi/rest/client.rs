@@ -12,6 +12,11 @@ pub struct RestApi<T: Connect> {
     // 認証情報とかを後で追加する
 }
 
+pub fn new_restapi_client(url: impl Into<String>) -> RestApi<impl Connect + Clone> {
+    let url = url.into();
+    RestApi::<UnixConnector>::new(&url)
+}
+
 impl RestApi<UnixConnector> {
     pub fn new(unix_socket_path: &str) -> RestApi<UnixConnector> {
         let client = hyper::Client::unix();

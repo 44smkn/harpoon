@@ -1,7 +1,6 @@
 use crate::image::tui_controller::ImageTuiController;
 use crate::shared::event::Events;
-use hyperlocal::UnixConnector;
-use infrastructure::webapi::rest::client::RestApi;
+use infrastructure::webapi::rest::client;
 use infrastructure::webapi::rest::image_repository::RestfulApiImageRepository;
 use std::error::Error;
 use std::io;
@@ -18,7 +17,7 @@ pub async fn draw_by_default() -> Result<(), Box<dyn Error + Send + Sync>> {
     let events = Events::new();
 
     // image
-    let client = RestApi::<UnixConnector>::new("/var/run/docker.sock");
+    let client = client::new_restapi_client("/var/run/docker.sock");
     let image_repository = RestfulApiImageRepository::new(&client);
     let list_image_usecase = ListImageUsecase::new(&image_repository);
     let inspect_image_usecase = InspectImageUsecase::new(&image_repository);
