@@ -17,3 +17,18 @@ impl<'a> ListImageUsecase<'a> {
         Ok(images)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use infrastructure::webapi::inmem::image_repository::FakeImageRepository;
+    use tokio;
+    use usecase::list_image::ListImageUsecase;
+
+    #[tokio::test]
+    async fn listing() {
+        let image_repository = FakeImageRepository::new();
+        let list_image_usecase = ListImageUsecase::new(&image_repository);
+        let image_summaries = list_image_usecase.list_image().await;
+        assert!(image_summaries.is_ok());
+    }
+}
