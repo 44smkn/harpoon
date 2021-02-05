@@ -9,8 +9,26 @@ pub trait ContainerRepository {
 
 pub struct ContainerSummary {
     pub id: String,
-    pub name: Vec<String>,
+    pub names: Vec<String>,
     pub image: String,
     pub created: DateTime<Utc>,
     pub status: String,
+}
+
+impl ContainerSummary {
+    pub fn from_repository(
+        id: String,
+        names: Vec<String>,
+        image: String,
+        created: DateTime<Utc>,
+        status: String,
+    ) -> Self {
+        Self {
+            id,
+            names,
+            image,
+            created,
+            status,
+        }
+    }
 }
