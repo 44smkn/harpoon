@@ -1,5 +1,5 @@
 use crate::image::tui_controller::ImageTuiController;
-use crate::shared::event::Events;
+use crate::shared::tabs::TabsState;
 use infrastructure::webapi::rest::client;
 use infrastructure::webapi::rest::image_repository::RestfulApiImageRepository;
 use std::error::Error;
@@ -14,7 +14,7 @@ use usecase::{inspect_image::InspectImageUsecase, list_image::ListImageUsecase};
 pub async fn draw_by_default() -> Result<(), Box<dyn Error + Send + Sync>> {
     // Terminal initialization
     let mut terminal = terminal()?;
-    let events = Events::new();
+    let mut tab = TabsState::new_menu();
 
     // image
     let client = client::new_restapi_client("/var/run/docker.sock");
@@ -22,7 +22,7 @@ pub async fn draw_by_default() -> Result<(), Box<dyn Error + Send + Sync>> {
     let list_image_usecase = ListImageUsecase::new(&image_repository);
     let inspect_image_usecase = InspectImageUsecase::new(&image_repository);
     let image_controller = ImageTuiController::new(&list_image_usecase, &inspect_image_usecase);
-    image_controller.draw(&mut terminal, &events).await?;
+    image_controller.draw(&mut terminal, &mut tab).await?;
     Ok(())
 }
 

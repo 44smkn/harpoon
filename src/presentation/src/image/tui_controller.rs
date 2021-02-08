@@ -3,11 +3,11 @@ use crate::shared::{
     layout,
     paragraph::SimpleParagraph,
     table::{StatefulTable, StatelessTable},
-    tabs,
+    tabs::TabsState,
 };
+use crate::TuiResult;
 use domain::image::ImageSummary;
 
-use std::error::Error;
 use termion::event::Key;
 use tui::{backend::Backend, layout::Constraint, Terminal};
 use usecase::{
@@ -28,13 +28,7 @@ impl<'a> ImageTuiController<'a> {
         }
     }
 
-    pub async fn draw(
-        &self,
-        terminal: &mut Terminal<impl Backend>,
-        events: &Events,
-    ) -> Result<(), Box<dyn Error + Send + Sync>> {
-        let mut tab = tabs::TabsState::new_menu();
-
+    pub async fn draw(&self, terminal: &mut Terminal<impl Backend>, tab: &mut TabsState<'a>) -> TuiResult {
         let mut images = self.list_usecase.list_image().await?;
         // image list table
         let items = images_to_table(&mut images);
@@ -55,6 +49,8 @@ impl<'a> ImageTuiController<'a> {
             Constraint::Percentage(15),
         ];
         let mut history_table = StatelessTable::new(vec![], "History", header, widths);
+        let events = Events::new();
+
         // Input
         loop {
             terminal.draw(|f| {
@@ -75,6 +71,7 @@ impl<'a> ImageTuiController<'a> {
                 paragraph.render(f, detail_up);
                 history_table.render(f, detail_down);
             })?;
+
             if let Event::Input(key) = events.next()? {
                 match key {
                     Key::Char('q') => {
