@@ -5,7 +5,6 @@ use crate::shared::{
     table::{StatefulTable, StatelessTable},
     tabs,
 };
-#[allow(unused_imports)]
 use domain::image::ImageSummary;
 
 use std::error::Error;
@@ -16,7 +15,6 @@ use usecase::{
     list_image::ListImageUsecase,
 };
 
-#[allow(dead_code)]
 pub struct ImageTuiController<'a> {
     list_usecase: &'a ListImageUsecase<'a>,
     inspect_usecase: &'a InspectImageUsecase<'a>,
