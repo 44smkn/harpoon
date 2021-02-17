@@ -53,11 +53,7 @@ impl<'a> TabsState<'a> {
             .block(Block::default().borders(Borders::ALL).title("Tabs"))
             .select(self.index)
             .style(Style::default().fg(Color::Cyan))
-            .highlight_style(
-                Style::default()
-                    .add_modifier(Modifier::BOLD)
-                    .bg(Color::Black),
-            );
+            .highlight_style(Style::default().add_modifier(Modifier::BOLD).bg(Color::Black));
         frame.render_widget(tabs, rect);
     }
 }
