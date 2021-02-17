@@ -5,7 +5,7 @@ use crate::shared::{
     table::{StatefulTable, StatelessTable},
     tabs::TabsState,
 };
-use crate::TuiResult;
+use crate::{TuiOperationStatus, TuiResult};
 use domain::image::ImageSummary;
 
 use termion::event::Key;
@@ -94,15 +94,17 @@ impl<'a> ImageTuiController<'a> {
                     }
                     Key::Right => {
                         tab.next();
+                        return Ok(TuiOperationStatus::Continue);
                     }
                     Key::Left => {
                         tab.previous();
+                        return Ok(TuiOperationStatus::Continue);
                     }
                     _ => {}
                 }
             };
         }
-        Ok(())
+        Ok(TuiOperationStatus::Quit)
     }
 }
 

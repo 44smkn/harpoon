@@ -1,5 +1,6 @@
 use crate::image::tui_controller::ImageTuiController;
 use crate::shared::tabs::TabsState;
+use crate::TuiOperationStatus;
 use infrastructure::webapi::rest::client;
 use infrastructure::webapi::rest::image_repository::RestfulApiImageRepository;
 use std::error::Error;
@@ -22,7 +23,13 @@ pub async fn draw_by_default() -> Result<(), Box<dyn Error + Send + Sync>> {
     let list_image_usecase = ListImageUsecase::new(&image_repository);
     let inspect_image_usecase = InspectImageUsecase::new(&image_repository);
     let image_controller = ImageTuiController::new(&list_image_usecase, &inspect_image_usecase);
-    image_controller.draw(&mut terminal, &mut tab).await?;
+    loop {
+        let status = image_controller.draw(&mut terminal, &mut tab).await?;
+        if status == TuiOperationStatus::Quit {
+            break;
+        }
+    }
+
     Ok(())
 }
 
